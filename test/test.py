@@ -211,7 +211,37 @@ class ParseTestCase(unittest.TestCase):
 
     def testMatrix2(self):
         self.assertRendersTo('x/x={(1,if x!=0),(text{undefined},if x=0):}', # columnalign="left"
-            '<mfrac><mi>x</mi><mi>x</mi></mfrac><mo>=</mo><mrow><mo>{</mo><mtable><mtr><mtd><mn>1</mn></mtd><mtd><mrow><mspace width="1ex" /><mo>if</mo><mspace width="1ex" /></mrow><mi>x</mi><mo>&#8800;</mo><mn>0</mn></mtd></mtr><mtr><mtd><mrow><mtext>undefined</mtext></mrow></mtd><mtd><mrow><mspace width="1ex" /><mo>if</mo><mspace width="1ex" /></mrow><mi>x</mi><mo>=</mo><mn>0</mn></mtd></mtr></mtable></mrow>')
+                '<mfrac><mi>x</mi><mi>x</mi></mfrac>'
+                '<mo>=</mo>'
+                '<mrow>'
+                    '<mo>{</mo>'
+                    '<mtable>'
+                    '<mtr>'
+                        '<mtd><mn>1</mn></mtd>'
+                        '<mtd>'
+                            '<mrow><mspace width="1ex" /><mo>if</mo><mspace width="1ex" /></mrow>'
+                            '<mi>x</mi>'
+                            '<mo>&#8800;</mo>'
+                            '<mn>0</mn>'
+                        '</mtd>'
+                    '</mtr>'
+                    '<mtr>'
+                        '<mtd>'
+                            '<mrow><mtext>undefined</mtext></mrow>'
+                        '</mtd>'
+                        '<mtd>'
+                            '<mrow>'
+                                '<mspace width="1ex" />'
+                                '<mo>if</mo>'
+                                '<mspace width="1ex" />'
+                            '</mrow>'
+                            '<mi>x</mi>'
+                            '<mo>=</mo>'
+                            '<mn>0</mn>'
+                        '</mtd>'
+                    '</mtr>'
+                    '</mtable>'
+                '</mrow>')
 
     # asciimathml.js wraps twice the `x` with a single bar (<mrow><mo>|</mo><mrow><mo>|</mo> ...)
     # we use a double bar instead

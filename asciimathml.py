@@ -316,12 +316,15 @@ def remove_private(n):
 
     return n
 
-def remove_invisible(ns):
-    for i in range(len(ns)-1, 0, -1):
+def remove_invisible(ns, parent=None):
+    for i in range(len(ns)-1, -1, -1):
         if ns[i].get('_invisible', False):
-            del ns[i]
+            if parent is None:
+                del ns[i]
+            else:
+                parent.remove(ns[i])
         else:
-            remove_invisible(ns[i].getchildren())
+            remove_invisible(ns[i].getchildren(), parent=ns[i])
 
 def copy(n):
     m = El(n.tag, n.text, **dict(n.items()))
