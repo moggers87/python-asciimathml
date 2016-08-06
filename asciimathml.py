@@ -149,10 +149,11 @@ def parse_string(s):
 
         text = s[1:end]
         s = s[end+1:]
+        return s, El('mrow', El('mtext', text))
     else:
         s, text = parse_m(s)
+        return s, El('mtext', text)
 
-    return s, El('mrow', El('mtext', text))
 
 tracing_level = 0
 def trace_parser(p):
