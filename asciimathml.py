@@ -217,11 +217,26 @@ def parse_expr(s, siblings, required=False):
         # symmetrical delimiters (e.g. ||).
         # In that case, act as an opening delimiter only if there is not
         # already one of the same kind among the preceding siblings.
-        if n.get('_opening', False) \
-           and (not n.get('_closing', False) \
-                or find_node_backwards(siblings, n.text) == -1):
-            s, children = parse_exprs(s, [n], inside_parens=True)
-            n = El('mrow', *children)
+
+        sym_paren = n.get('_opening', False) and n.get('_closing', False)
+        prev_sib_pos = find_node_backwards(siblings, n.text)
+        parens_nest = (
+            n.get('_opening', False)
+            and (
+                not n.get('_closing', False)
+                or (
+                    sym_paren is (prev_sib_pos != -1)
+                )
+            )
+        )
+
+        if parens_nest:
+            if sym_paren:
+                n = El('mrow', *siblings[prev_sib_pos:], n)
+                del siblings[prev_sib_pos:]
+            else:
+                s, children = parse_exprs(s, [n], inside_parens=True)
+                n = El('mrow', *children)
 
         if n.tag == 'mtext':
             s, n = parse_string(s)
@@ -245,7 +260,7 @@ def find_node(ns, text):
 def find_node_backwards(ns, text):
     for i, n in enumerate(reversed(ns)):
         if n.text == text:
-            return len(ns) - i
+            return len(ns) - (i + 1)
 
     return -1
 
@@ -288,9 +303,20 @@ def parse_exprs(s, nodes=None, inside_parens=False):
         s, n = parse_expr(s, nodes)
 
         if not n is None:
+            truly_closing = (
+                n.get('_closing', False)
+                and (
+                    not n.get('_opening', False)
+                    or
+                    (
+                        find_node_backwards(nodes, n.text) != -1
+                    )
+                )
+            )
+
             nodes.append(n)
 
-            if n.get('_closing', False):
+            if truly_closing:
                 if not inside_matrix:
                     return s, nodes
                 else:
