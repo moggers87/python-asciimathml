@@ -25,13 +25,16 @@ __all__ = ['parse']
 Element_ = Element
 AtomicString_ = lambda s: s
 
+NUMBER_RE = re.compile(r'-?(\d+\.(\d+)?|\.?\d+)')
+QUOTED_STRING_RE = re.compile(r'"([^"]*)"')
+
 def text_check(text):
     py2str = (sys.version_info.major == 2 and isinstance(text, basestring))
     py3str = (sys.version_info.major == 3 and isinstance(text, str))
 
     return (py3str or py2str)
 
-def El(tag, text=None, *children, **attrib):
+def element_factory(tag, text=None, *children, **attrib):
     element = Element_(tag, **attrib)
 
     if not text is None:
@@ -45,13 +48,10 @@ def El(tag, text=None, *children, **attrib):
 
     return element
 
-number_re = re.compile('-?(\d+\.(\d+)?|\.?\d+)')
-quoted_string_re = re.compile(r'"([^"]*)"')
-
 def strip_parens(n):
     if n.tag == 'mrow':
         if n[0].get('_opening', False):
-           del n[0]
+            del n[0]
 
         if n[-1].get('_closing', False):
             del n[-1]
@@ -83,16 +83,22 @@ def unary(operator, operand, swap=False):
     return operator
 
 def frac(num, den):
-    return El('mfrac', strip_parens(num), strip_parens(den))
+    return element_factory('mfrac', strip_parens(num), strip_parens(den))
 
 def sub(base, subscript):
     subscript = strip_parens(subscript)
 
     if base.tag in ('msup', 'mover'):
         children = base.getchildren()
-        n = El('msubsup' if base.tag == 'msup' else 'munderover', children[0], subscript, children[1])
+        n = element_factory(
+            'msubsup' if base.tag == 'msup' else 'munderover',
+            children[0], subscript, children[1]
+        )
     else:
-        n = El('munder' if base.get('_underover', False) else 'msub', base, subscript)
+        n = element_factory(
+            'munder' if base.get('_underover', False) else 'msub',
+            base, subscript
+        )
 
     return n
 
@@ -101,9 +107,15 @@ def sup(base, superscript):
 
     if base.tag in ('msub', 'munder'):
         children = base.getchildren()
-        n = El('msubsup' if base.tag == 'msub' else 'munderover', children[0], children[1], superscript)
+        n = element_factory(
+            'msubsup' if base.tag == 'msub' else 'munderover',
+            children[0], children[1], superscript
+        )
     else:
-        n = El('mover' if base.get('_underover', False) else 'msup', base, superscript)
+        n = element_factory(
+            'mover' if base.get('_underover', False) else 'msup',
+            base, superscript
+        )
 
     return n
 
@@ -136,7 +148,7 @@ example we can generate its string representation:
     remove_invisible(nodes)
     nodes = map(remove_private, nodes)
 
-    return El('math', El('mstyle', *nodes))
+    return element_factory('math', element_factory('mstyle', *nodes))
 
 delimiters = {'{': '}', '(': ')', '[': ']'}
 
@@ -149,10 +161,10 @@ def parse_string(s):
 
         text = s[1:end]
         s = s[end+1:]
-        return s, El('mrow', El('mtext', text))
+        return s, element_factory('mrow', element_factory('mtext', text))
     else:
         s, text = parse_m(s)
-        return s, El('mtext', text)
+        return s, element_factory('mtext', text)
 
 
 tracing_level = 0
@@ -185,8 +197,6 @@ def trace_parser(p):
                 return n
 
     def print_trace(*args):
-        import sys
-
         sys.stderr.write("    " * tracing_level)
         for arg in args:
             sys.stderr.write(str(arg))
@@ -232,11 +242,11 @@ def parse_expr(s, siblings, required=False):
 
         if parens_nest:
             if sym_paren:
-                n = El('mrow', *siblings[prev_sib_pos:], n)
+                n = element_factory('mrow', *siblings[prev_sib_pos:], n)
                 del siblings[prev_sib_pos:]
             else:
                 s, children = parse_exprs(s, [n], inside_parens=True)
-                n = El('mrow', *children)
+                n = element_factory('mrow', *children)
 
         if n.tag == 'mtext':
             s, n = parse_string(s)
@@ -265,7 +275,7 @@ def find_node_backwards(ns, text):
     return -1
 
 def nodes_to_row(row):
-    mrow = El('mtr')
+    mrow = element_factory('mtr')
 
     nodes = row.getchildren()
 
@@ -273,17 +283,17 @@ def nodes_to_row(row):
         i = find_node(nodes, ',')
 
         if i > 0:
-            mrow.append(El('mtd', *nodes[:i]))
+            mrow.append(element_factory('mtd', *nodes[:i]))
 
             nodes = nodes[i+1:]
         else:
-            mrow.append(El('mtd', *nodes))
+            mrow.append(element_factory('mtd', *nodes))
             break
 
     return mrow
 
 def nodes_to_matrix(nodes):
-    mtable = El('mtable')
+    mtable = element_factory('mtable')
 
     for row in nodes[1:-1]:
         if row.text == ',':
@@ -291,7 +301,7 @@ def nodes_to_matrix(nodes):
 
         mtable.append(nodes_to_row(strip_parens(row)))
 
-    return El('mrow', nodes[0], mtable, nodes[-1])
+    return element_factory('mrow', nodes[0], mtable, nodes[-1])
 
 def parse_exprs(s, nodes=None, inside_parens=False):
     if nodes is None:
@@ -341,11 +351,11 @@ def parse_exprs(s, nodes=None, inside_parens=False):
 
             len_nodes = len(nodes)
             if len_nodes >= 3 and nodes[-2].get('_special_binary'):
-                transform =  nodes[-2].get('_special_binary')
+                transform = nodes[-2].get('_special_binary')
                 nodes[-3:] = [transform(nodes[-3], nodes[-1])]
             elif s == '' and len_nodes == 2 and nodes[-1].get('_special_binary'):
-                transform =  nodes[-1].get('_special_binary')
-                nodes[-2:] = [transform(nodes[-2], El("mo"))]
+                transform = nodes[-1].get('_special_binary')
+                nodes[-2:] = [transform(nodes[-2], element_factory("mo"))]
 
         if s == '':
             return '', nodes
@@ -372,7 +382,7 @@ def remove_invisible(ns, parent=None):
             remove_invisible(ns[i].getchildren(), parent=ns[i])
 
 def copy(n):
-    m = El(n.tag, n.text, **dict(n.items()))
+    m = element_factory(n.tag, n.text, **dict(n.items()))
 
     for c in n.getchildren():
         m.append(copy(c))
@@ -383,238 +393,245 @@ def parse_m(s, required=False):
     s = s.strip()
 
     if s == '':
-        return '', El('mi', u'\u25a1') if required else None
+        return '', element_factory('mi', u'\u25a1') if required else None
 
-    m = quoted_string_re.match(s)
+    m = QUOTED_STRING_RE.match(s)
     if m:
         text = m.group(1)
-        return s[m.end():], El('mrow', El('mtext', text))
+        return s[m.end():], element_factory(
+            'mrow',
+            element_factory('mtext', text)
+        )
 
-    m = number_re.match(s)
+    m = NUMBER_RE.match(s)
 
     if m:
         number = m.group(0)
         if number[0] == '-':
-            return s[m.end():], El('mrow', El('mo', '-'), El('mn', number[1:]))
+            return s[m.end():], element_factory(
+                'mrow',
+                element_factory('mo', '-'),
+                element_factory('mn', number[1:])
+            )
         else:
-            return s[m.end():], El('mn', number)
+            return s[m.end():], element_factory('mn', number)
 
     for y in symbol_names:
         if s.startswith(y):
             n = copy(symbols[y])
 
             if n.get('_space', False):
-                n = El('mrow',
-                        El('mspace', width='1ex'),
-                        n,
-                        El('mspace', width='1ex'))
+                n = element_factory(
+                    'mrow',
+                    element_factory('mspace', width='1ex'),
+                    n,
+                    element_factory('mspace', width='1ex')
+                )
 
             return s[len(y):], n
 
-    return s[1:], El('mi' if s[0].isalpha() else 'mo', s[0])
+    return s[1:], element_factory('mi' if s[0].isalpha() else 'mo', s[0])
 
 symbols = {}
 
-def Symbol(input, el):
-    symbols[input] = el
+symbols["alpha"] = element_factory("mi", u"\u03B1")
+symbols["beta"] = element_factory("mi", u"\u03B2")
+symbols["chi"] = element_factory("mi", u"\u03C7")
+symbols["delta"] = element_factory("mi", u"\u03B4")
+symbols["Delta"] = element_factory("mo", u"\u0394")
+symbols["epsi"] = element_factory("mi", u"\u03B5")
+symbols["varepsilon"] = element_factory("mi", u"\u025B")
+symbols["eta"] = element_factory("mi", u"\u03B7")
+symbols["gamma"] = element_factory("mi", u"\u03B3")
+symbols["Gamma"] = element_factory("mo", u"\u0393")
+symbols["iota"] = element_factory("mi", u"\u03B9")
+symbols["kappa"] = element_factory("mi", u"\u03BA")
+symbols["lambda"] = element_factory("mi", u"\u03BB")
+symbols["Lambda"] = element_factory("mo", u"\u039B")
+symbols["mu"] = element_factory("mi", u"\u03BC")
+symbols["nu"] = element_factory("mi", u"\u03BD")
+symbols["omega"] = element_factory("mi", u"\u03C9")
+symbols["Omega"] = element_factory("mo", u"\u03A9")
+symbols["phi"] = element_factory("mi", u"\u03C6")
+symbols["varphi"] = element_factory("mi", u"\u03D5")
+symbols["Phi"] = element_factory("mo", u"\u03A6")
+symbols["pi"] = element_factory("mi", u"\u03C0")
+symbols["Pi"] = element_factory("mo", u"\u03A0")
+symbols["psi"] = element_factory("mi", u"\u03C8")
+symbols["Psi"] = element_factory("mi", u"\u03A8")
+symbols["rho"] = element_factory("mi", u"\u03C1")
+symbols["sigma"] = element_factory("mi", u"\u03C3")
+symbols["Sigma"] = element_factory("mo", u"\u03A3")
+symbols["tau"] = element_factory("mi", u"\u03C4")
+symbols["theta"] = element_factory("mi", u"\u03B8")
+symbols["vartheta"] = element_factory("mi", u"\u03D1")
+symbols["Theta"] = element_factory("mo", u"\u0398")
+symbols["upsilon"] = element_factory("mi", u"\u03C5")
+symbols["xi"] = element_factory("mi", u"\u03BE")
+symbols["Xi"] = element_factory("mo", u"\u039E")
+symbols["zeta"] = element_factory("mi", u"\u03B6")
 
-Symbol(input="alpha",  el=El("mi", u"\u03B1"))
-Symbol(input="beta",  el=El("mi", u"\u03B2"))
-Symbol(input="chi",    el=El("mi", u"\u03C7"))
-Symbol(input="delta",  el=El("mi", u"\u03B4"))
-Symbol(input="Delta",  el=El("mo", u"\u0394"))
-Symbol(input="epsi",   el=El("mi", u"\u03B5"))
-Symbol(input="varepsilon", el=El("mi", u"\u025B"))
-Symbol(input="eta",    el=El("mi", u"\u03B7"))
-Symbol(input="gamma",  el=El("mi", u"\u03B3"))
-Symbol(input="Gamma",  el=El("mo", u"\u0393"))
-Symbol(input="iota",   el=El("mi", u"\u03B9"))
-Symbol(input="kappa",  el=El("mi", u"\u03BA"))
-Symbol(input="lambda", el=El("mi", u"\u03BB"))
-Symbol(input="Lambda", el=El("mo", u"\u039B"))
-Symbol(input="mu",     el=El("mi", u"\u03BC"))
-Symbol(input="nu",     el=El("mi", u"\u03BD"))
-Symbol(input="omega",  el=El("mi", u"\u03C9"))
-Symbol(input="Omega",  el=El("mo", u"\u03A9"))
-Symbol(input="phi",    el=El("mi", u"\u03C6"))
-Symbol(input="varphi", el=El("mi", u"\u03D5"))
-Symbol(input="Phi",    el=El("mo", u"\u03A6"))
-Symbol(input="pi",     el=El("mi", u"\u03C0"))
-Symbol(input="Pi",     el=El("mo", u"\u03A0"))
-Symbol(input="psi",    el=El("mi", u"\u03C8"))
-Symbol(input="Psi",    el=El("mi", u"\u03A8"))
-Symbol(input="rho",    el=El("mi", u"\u03C1"))
-Symbol(input="sigma",  el=El("mi", u"\u03C3"))
-Symbol(input="Sigma",  el=El("mo", u"\u03A3"))
-Symbol(input="tau",    el=El("mi", u"\u03C4"))
-Symbol(input="theta",  el=El("mi", u"\u03B8"))
-Symbol(input="vartheta", el=El("mi", u"\u03D1"))
-Symbol(input="Theta",  el=El("mo", u"\u0398"))
-Symbol(input="upsilon", el=El("mi", u"\u03C5"))
-Symbol(input="xi",     el=El("mi", u"\u03BE"))
-Symbol(input="Xi",     el=El("mo", u"\u039E"))
-Symbol(input="zeta",   el=El("mi", u"\u03B6"))
+symbols["*"] = element_factory("mo", u"\u22C5")
+symbols["**"] = element_factory("mo", u"\u22C6")
 
-Symbol(input="*",  el=El("mo", u"\u22C5"))
-Symbol(input="**", el=El("mo", u"\u22C6"))
+symbols["/"] = element_factory("mo", u"/", _special_binary=frac)
+symbols["^"] = element_factory("mo", u"^", _special_binary=sup)
+symbols["_"] = element_factory("mo", u"_", _special_binary=sub)
+symbols["//"] = element_factory("mo", u"/")
+symbols["\\\\"] = element_factory("mo", u"\\")
+symbols["setminus"] = element_factory("mo", u"\\")
+symbols["xx"] = element_factory("mo", u"\u00D7")
+symbols["-:"] = element_factory("mo", u"\u00F7")
+symbols["@"] = element_factory("mo", u"\u2218")
+symbols["o+"] = element_factory("mo", u"\u2295")
+symbols["ox"] = element_factory("mo", u"\u2297")
+symbols["o."] = element_factory("mo", u"\u2299")
+symbols["sum"] = element_factory("mo", u"\u2211", _underover=True)
+symbols["prod"] = element_factory("mo", u"\u220F", _underover=True)
+symbols["^^"] = element_factory("mo", u"\u2227")
+symbols["^^^"] = element_factory("mo", u"\u22C0", _underover=True)
+symbols["vv"] = element_factory("mo", u"\u2228")
+symbols["vvv"] = element_factory("mo", u"\u22C1", _underover=True)
+symbols["nn"] = element_factory("mo", u"\u2229")
+symbols["nnn"] = element_factory("mo", u"\u22C2", _underover=True)
+symbols["uu"] = element_factory("mo", u"\u222A")
+symbols["uuu"] = element_factory("mo", u"\u22C3", _underover=True)
 
-Symbol(input="/", el=El("mo", u"/", _special_binary=frac))
-Symbol(input="^", el=El("mo", u"^", _special_binary=sup))
-Symbol(input="_", el=El("mo", u"_", _special_binary=sub))
-Symbol(input="//", el=El("mo", u"/"))
-Symbol(input="\\\\", el=El("mo", u"\\"))
-Symbol(input="setminus", el=El("mo", u"\\"))
-Symbol(input="xx", el=El("mo", u"\u00D7"))
-Symbol(input="-:", el=El("mo", u"\u00F7"))
-Symbol(input="@",  el=El("mo", u"\u2218"))
-Symbol(input="o+", el=El("mo", u"\u2295"))
-Symbol(input="ox", el=El("mo", u"\u2297"))
-Symbol(input="o.", el=El("mo", u"\u2299"))
-Symbol(input="sum", el=El("mo", u"\u2211", _underover=True))
-Symbol(input="prod", el=El("mo", u"\u220F", _underover=True))
-Symbol(input="^^",  el=El("mo", u"\u2227"))
-Symbol(input="^^^", el=El("mo", u"\u22C0", _underover=True))
-Symbol(input="vv",  el=El("mo", u"\u2228"))
-Symbol(input="vvv", el=El("mo", u"\u22C1", _underover=True))
-Symbol(input="nn",  el=El("mo", u"\u2229"))
-Symbol(input="nnn", el=El("mo", u"\u22C2", _underover=True))
-Symbol(input="uu",  el=El("mo", u"\u222A"))
-Symbol(input="uuu", el=El("mo", u"\u22C3", _underover=True))
+symbols["!="] = element_factory("mo", u"\u2260")
+symbols[":="] = element_factory("mo", u":=")
+symbols["lt"] = element_factory("mo", u"<")
+symbols["<="] = element_factory("mo", u"\u2264")
+symbols["lt="] = element_factory("mo", u"\u2264")
+symbols[">="] = element_factory("mo", u"\u2265")
+symbols["geq"] = element_factory("mo", u"\u2265")
+symbols["-<"] = element_factory("mo", u"\u227A")
+symbols["-lt"] = element_factory("mo", u"\u227A")
+symbols[">-"] = element_factory("mo", u"\u227B")
+symbols["-<="] = element_factory("mo", u"\u2AAF")
+symbols[">-="] = element_factory("mo", u"\u2AB0")
+symbols["in"] = element_factory("mo", u"\u2208")
+symbols["!in"] = element_factory("mo", u"\u2209")
+symbols["sub"] = element_factory("mo", u"\u2282")
+symbols["sup"] = element_factory("mo", u"\u2283")
+symbols["sube"] = element_factory("mo", u"\u2286")
+symbols["supe"] = element_factory("mo", u"\u2287")
+symbols["-="] = element_factory("mo", u"\u2261")
+symbols["~="] = element_factory("mo", u"\u2245")
+symbols["~~"] = element_factory("mo", u"\u2248")
+symbols["prop"] = element_factory("mo", u"\u221D")
 
-Symbol(input="!=",  el=El("mo", u"\u2260"))
-Symbol(input=":=",  el=El("mo", u":="))
-Symbol(input="lt",  el=El("mo", u"<"))
-Symbol(input="<=",  el=El("mo", u"\u2264"))
-Symbol(input="lt=", el=El("mo", u"\u2264"))
-Symbol(input=">=",  el=El("mo", u"\u2265"))
-Symbol(input="geq", el=El("mo", u"\u2265"))
-Symbol(input="-<",  el=El("mo", u"\u227A"))
-Symbol(input="-lt", el=El("mo", u"\u227A"))
-Symbol(input=">-",  el=El("mo", u"\u227B"))
-Symbol(input="-<=", el=El("mo", u"\u2AAF"))
-Symbol(input=">-=", el=El("mo", u"\u2AB0"))
-Symbol(input="in",  el=El("mo", u"\u2208"))
-Symbol(input="!in", el=El("mo", u"\u2209"))
-Symbol(input="sub", el=El("mo", u"\u2282"))
-Symbol(input="sup", el=El("mo", u"\u2283"))
-Symbol(input="sube", el=El("mo", u"\u2286"))
-Symbol(input="supe", el=El("mo", u"\u2287"))
-Symbol(input="-=",  el=El("mo", u"\u2261"))
-Symbol(input="~=",  el=El("mo", u"\u2245"))
-Symbol(input="~~",  el=El("mo", u"\u2248"))
-Symbol(input="prop", el=El("mo", u"\u221D"))
+symbols["and"] = element_factory("mtext", u"and", _space=True)
+symbols["or"] = element_factory("mtext", u"or", _space=True)
+symbols["not"] = element_factory("mo", u"\u00AC")
+symbols["=>"] = element_factory("mo", u"\u21D2")
+symbols["if"] = element_factory("mo", u"if", _space=True)
+symbols["<=>"] = element_factory("mo", u"\u21D4")
+symbols["AA"] = element_factory("mo", u"\u2200")
+symbols["EE"] = element_factory("mo", u"\u2203")
+symbols["_|_"] = element_factory("mo", u"\u22A5")
+symbols["TT"] = element_factory("mo", u"\u22A4")
+symbols["|--"] = element_factory("mo", u"\u22A2")
+symbols["|=="] = element_factory("mo", u"\u22A8")
 
-Symbol(input="and", el=El("mtext", u"and", _space=True))
-Symbol(input="or",  el=El("mtext", u"or", _space=True))
-Symbol(input="not", el=El("mo", u"\u00AC"))
-Symbol(input="=>",  el=El("mo", u"\u21D2"))
-Symbol(input="if",  el=El("mo", u"if", _space=True))
-Symbol(input="<=>", el=El("mo", u"\u21D4"))
-Symbol(input="AA",  el=El("mo", u"\u2200"))
-Symbol(input="EE",  el=El("mo", u"\u2203"))
-Symbol(input="_|_", el=El("mo", u"\u22A5"))
-Symbol(input="TT",  el=El("mo", u"\u22A4"))
-Symbol(input="|--",  el=El("mo", u"\u22A2"))
-Symbol(input="|==",  el=El("mo", u"\u22A8"))
+symbols["("] = element_factory("mo", "(", _opening=True)
+symbols[")"] = element_factory("mo", ")", _closing=True)
+symbols["["] = element_factory("mo", "[", _opening=True)
+symbols["]"] = element_factory("mo", "]", _closing=True)
+symbols["{"] = element_factory("mo", "{", _opening=True)
+symbols["}"] = element_factory("mo", "}", _closing=True)
+symbols["|"] = element_factory("mo", u"|", _opening=True, _closing=True)
+# double vertical line
+symbols["||"] = element_factory("mo", u"\u2016", _opening=True, _closing=True)
+symbols["(:"] = element_factory("mo", u"\u2329", _opening=True)
+symbols[":)"] = element_factory("mo", u"\u232A", _closing=True)
+symbols["<<"] = element_factory("mo", u"\u2329", _opening=True)
+symbols[">>"] = element_factory("mo", u"\u232A", _closing=True)
+symbols["{:"] = element_factory("mo", u"{:", _opening=True, _invisible=True)
+symbols[":}"] = element_factory("mo", u":}", _closing=True, _invisible=True)
 
-Symbol(input="(",  el=El("mo", "(", _opening=True))
-Symbol(input=")",  el=El("mo", ")", _closing=True))
-Symbol(input="[",  el=El("mo", "[", _opening=True))
-Symbol(input="]",  el=El("mo", "]", _closing=True))
-Symbol(input="{",  el=El("mo", "{", _opening=True))
-Symbol(input="}",  el=El("mo", "}", _closing=True))
-Symbol(input="|", el=El("mo", u"|", _opening=True, _closing=True))
-Symbol(input="||", el=El("mo", u"\u2016", _opening=True, _closing=True)) # double vertical line
-Symbol(input="(:", el=El("mo", u"\u2329", _opening=True))
-Symbol(input=":)", el=El("mo", u"\u232A", _closing=True))
-Symbol(input="<<", el=El("mo", u"\u2329", _opening=True))
-Symbol(input=">>", el=El("mo", u"\u232A", _closing=True))
-Symbol(input="{:", el=El("mo", u"{:", _opening=True, _invisible=True))
-Symbol(input=":}", el=El("mo", u":}", _closing=True, _invisible=True))
+symbols["int"] = element_factory("mo", u"\u222B")
+# symbols["dx"] = element_factory("mi", u"{:d x:}", _definition=True)
+# symbols["dy"] = element_factory("mi", u"{:d y:}", _definition=True)
+# symbols["dz"] = element_factory("mi", u"{:d z:}", _definition=True)
+# symbols["dt"] = element_factory("mi", u"{:d t:}", _definition=True)
+symbols["oint"] = element_factory("mo", u"\u222E")
+symbols["del"] = element_factory("mo", u"\u2202")
+symbols["grad"] = element_factory("mo", u"\u2207")
+symbols["+-"] = element_factory("mo", u"\u00B1")
+symbols["O/"] = element_factory("mo", u"\u2205")
+symbols["oo"] = element_factory("mo", u"\u221E")
+symbols["aleph"] = element_factory("mo", u"\u2135")
+symbols["..."] = element_factory("mo", u"...")
+symbols[":."] = element_factory("mo", u"\u2234")
+symbols["/_"] = element_factory("mo", u"\u2220")
+symbols["\\ "] = element_factory("mo", u"\u00A0")
+symbols["quad"] = element_factory("mo", u"\u00A0\u00A0")
+symbols["qquad"] = element_factory("mo", u"\u00A0\u00A0\u00A0\u00A0")
+symbols["cdots"] = element_factory("mo", u"\u22EF")
+symbols["vdots"] = element_factory("mo", u"\u22EE")
+symbols["ddots"] = element_factory("mo", u"\u22F1")
+symbols["diamond"] = element_factory("mo", u"\u22C4")
+symbols["square"] = element_factory("mo", u"\u25A1")
+symbols["|__"] = element_factory("mo", u"\u230A")
+symbols["__|"] = element_factory("mo", u"\u230B")
+symbols["|~"] = element_factory("mo", u"\u2308")
+symbols["~|"] = element_factory("mo", u"\u2309")
+symbols["CC"] = element_factory("mo", u"\u2102")
+symbols["NN"] = element_factory("mo", u"\u2115")
+symbols["QQ"] = element_factory("mo", u"\u211A")
+symbols["RR"] = element_factory("mo", u"\u211D")
+symbols["ZZ"] = element_factory("mo", u"\u2124")
+symbols["f"] = element_factory("mi", u"f", _func=True) # sample
+symbols["g"] = element_factory("mi", u"g", _func=True)
 
-Symbol(input="int",  el=El("mo", u"\u222B"))
-# Symbol(input="dx",   el=El("mi", u"{:d x:}", _definition=True))
-# Symbol(input="dy",   el=El("mi", u"{:d y:}", _definition=True))
-# Symbol(input="dz",   el=El("mi", u"{:d z:}", _definition=True))
-# Symbol(input="dt",   el=El("mi", u"{:d t:}", _definition=True))
-Symbol(input="oint", el=El("mo", u"\u222E"))
-Symbol(input="del",  el=El("mo", u"\u2202"))
-Symbol(input="grad", el=El("mo", u"\u2207"))
-Symbol(input="+-",   el=El("mo", u"\u00B1"))
-Symbol(input="O/",   el=El("mo", u"\u2205"))
-Symbol(input="oo",   el=El("mo", u"\u221E"))
-Symbol(input="aleph", el=El("mo", u"\u2135"))
-Symbol(input="...",  el=El("mo", u"..."))
-Symbol(input=":.",  el=El("mo", u"\u2234"))
-Symbol(input="/_",  el=El("mo", u"\u2220"))
-Symbol(input="\\ ",  el=El("mo", u"\u00A0"))
-Symbol(input="quad", el=El("mo", u"\u00A0\u00A0"))
-Symbol(input="qquad", el=El("mo", u"\u00A0\u00A0\u00A0\u00A0"))
-Symbol(input="cdots", el=El("mo", u"\u22EF"))
-Symbol(input="vdots", el=El("mo", u"\u22EE"))
-Symbol(input="ddots", el=El("mo", u"\u22F1"))
-Symbol(input="diamond", el=El("mo", u"\u22C4"))
-Symbol(input="square", el=El("mo", u"\u25A1"))
-Symbol(input="|__", el=El("mo", u"\u230A"))
-Symbol(input="__|", el=El("mo", u"\u230B"))
-Symbol(input="|~", el=El("mo", u"\u2308"))
-Symbol(input="~|", el=El("mo", u"\u2309"))
-Symbol(input="CC",  el=El("mo", u"\u2102"))
-Symbol(input="NN",  el=El("mo", u"\u2115"))
-Symbol(input="QQ",  el=El("mo", u"\u211A"))
-Symbol(input="RR",  el=El("mo", u"\u211D"))
-Symbol(input="ZZ",  el=El("mo", u"\u2124"))
-Symbol(input="f",   el=El("mi", u"f", _func=True)) # sample
-Symbol(input="g",   el=El("mi", u"g", _func=True))
+symbols["lim"] = element_factory("mo", u"lim", _underover=True)
+symbols["Lim"] = element_factory("mo", u"Lim", _underover=True)
+symbols["sin"] = element_factory("mrow", element_factory("mo", "sin"), _arity=1)
+symbols["sin"] = element_factory("mrow", element_factory("mo", "sin"), _arity=1)
+symbols["cos"] = element_factory("mrow", element_factory("mo", "cos"), _arity=1)
+symbols["tan"] = element_factory("mrow", element_factory("mo", "tan"), _arity=1)
+symbols["sinh"] = element_factory("mrow", element_factory("mo", "sinh"), _arity=1)
+symbols["cosh"] = element_factory("mrow", element_factory("mo", "cosh"), _arity=1)
+symbols["tanh"] = element_factory("mrow", element_factory("mo", "tanh"), _arity=1)
+symbols["cot"] = element_factory("mrow", element_factory("mo", "cot"), _arity=1)
+symbols["sec"] = element_factory("mrow", element_factory("mo", "sec"), _arity=1)
+symbols["csc"] = element_factory("mrow", element_factory("mo", "csc"), _arity=1)
+symbols["log"] = element_factory("mrow", element_factory("mo", "log"), _arity=1)
+symbols["ln"] = element_factory("mrow", element_factory("mo", "ln"), _arity=1)
+symbols["det"] = element_factory("mrow", element_factory("mo", "det"), _arity=1)
+symbols["gcd"] = element_factory("mrow", element_factory("mo", "gcd"), _arity=1)
+symbols["lcm"] = element_factory("mrow", element_factory("mo", "lcm"), _arity=1)
+symbols["dim"] = element_factory("mo", u"dim")
+symbols["mod"] = element_factory("mo", u"mod")
+symbols["lub"] = element_factory("mo", u"lub")
+symbols["glb"] = element_factory("mo", u"glb")
+symbols["min"] = element_factory("mo", u"min", _underover=True)
+symbols["max"] = element_factory("mo", u"max", _underover=True)
 
-Symbol(input="lim",  el=El("mo", u"lim", _underover=True))
-Symbol(input="Lim",  el=El("mo", u"Lim", _underover=True))
-Symbol(input="sin",  el=El("mrow", El("mo", "sin"), _arity=1))
-Symbol(input="sin",  el=El("mrow", El("mo", "sin"), _arity=1))
-Symbol(input="cos",  el=El("mrow", El("mo", "cos"), _arity=1))
-Symbol(input="tan",  el=El("mrow", El("mo", "tan"), _arity=1))
-Symbol(input="sinh", el=El("mrow", El("mo", "sinh"), _arity=1))
-Symbol(input="cosh", el=El("mrow", El("mo", "cosh"), _arity=1))
-Symbol(input="tanh", el=El("mrow", El("mo", "tanh"), _arity=1))
-Symbol(input="cot",  el=El("mrow", El("mo", "cot"), _arity=1))
-Symbol(input="sec",  el=El("mrow", El("mo", "sec"), _arity=1))
-Symbol(input="csc",  el=El("mrow", El("mo", "csc"), _arity=1))
-Symbol(input="log",  el=El("mrow", El("mo", "log"), _arity=1))
-Symbol(input="ln",   el=El("mrow", El("mo", "ln"), _arity=1))
-Symbol(input="det",  el=El("mrow", El("mo", "det"), _arity=1))
-Symbol(input="gcd",  el=El("mrow", El("mo", "gcd"), _arity=1))
-Symbol(input="lcm",  el=El("mrow", El("mo", "lcm"), _arity=1))
-Symbol(input="dim",  el=El("mo", u"dim"))
-Symbol(input="mod",  el=El("mo", u"mod"))
-Symbol(input="lub",  el=El("mo", u"lub"))
-Symbol(input="glb",  el=El("mo", u"glb"))
-Symbol(input="min",  el=El("mo", u"min", _underover=True))
-Symbol(input="max",  el=El("mo", u"max", _underover=True))
+symbols["uarr"] = element_factory("mo", u"\u2191")
+symbols["darr"] = element_factory("mo", u"\u2193")
+symbols["rarr"] = element_factory("mo", u"\u2192")
+symbols["->"] = element_factory("mo", u"\u2192")
+symbols["|->"] = element_factory("mo", u"\u21A6")
+symbols["larr"] = element_factory("mo", u"\u2190")
+symbols["harr"] = element_factory("mo", u"\u2194")
+symbols["rArr"] = element_factory("mo", u"\u21D2")
+symbols["lArr"] = element_factory("mo", u"\u21D0")
+symbols["hArr"] = element_factory("mo", u"\u21D4")
 
-Symbol(input="uarr", el=El("mo", u"\u2191"))
-Symbol(input="darr", el=El("mo", u"\u2193"))
-Symbol(input="rarr", el=El("mo", u"\u2192"))
-Symbol(input="->",   el=El("mo", u"\u2192"))
-Symbol(input="|->",  el=El("mo", u"\u21A6"))
-Symbol(input="larr", el=El("mo", u"\u2190"))
-Symbol(input="harr", el=El("mo", u"\u2194"))
-Symbol(input="rArr", el=El("mo", u"\u21D2"))
-Symbol(input="lArr", el=El("mo", u"\u21D0"))
-Symbol(input="hArr", el=El("mo", u"\u21D4"))
+symbols["hat"] = element_factory("mover", element_factory("mo", u"\u005E"), _arity=1, _swap=1)
+symbols["bar"] = element_factory("mover", element_factory("mo", u"\u00AF"), _arity=1, _swap=1)
+symbols["vec"] = element_factory("mover", element_factory("mo", u"\u2192"), _arity=1, _swap=1)
+symbols["dot"] = element_factory("mover", element_factory("mo", u"."), _arity=1, _swap=1)
+symbols["ddot"] = element_factory("mover", element_factory("mo", u".."), _arity=1, _swap=1)
+symbols["ul"] = element_factory("munder", element_factory("mo", u"\u0332"), _arity=1, _swap=1)
 
-Symbol(input="hat", el=El("mover", El("mo", u"\u005E"), _arity=1, _swap=1))
-Symbol(input="bar", el=El("mover", El("mo", u"\u00AF"), _arity=1, _swap=1))
-Symbol(input="vec", el=El("mover", El("mo", u"\u2192"), _arity=1, _swap=1))
-Symbol(input="dot", el=El("mover", El("mo", u"."), _arity=1, _swap=1))
-Symbol(input="ddot",el=El("mover", El("mo", u".."), _arity=1, _swap=1))
-Symbol(input="ul", el=El("munder", El("mo", u"\u0332"), _arity=1, _swap=1))
+symbols["sqrt"] = element_factory("msqrt", _arity=1)
+symbols["root"] = element_factory("mroot", _arity=2, _swap=True)
+symbols["frac"] = element_factory("mfrac", _arity=2)
+symbols["stackrel"] = element_factory("mover", _arity=2)
 
-Symbol(input="sqrt", el=El("msqrt", _arity=1))
-Symbol(input="root", el=El("mroot", _arity=2, _swap=True))
-Symbol(input="frac", el=El("mfrac", _arity=2))
-Symbol(input="stackrel", el=El("mover", _arity=2))
-
-Symbol(input="text", el=El("mtext", _arity=1))
+symbols["text"] = element_factory("mtext", _arity=1)
 # {input:"mbox", tag:"mtext", output:"mbox", tex:null, ttype:TEXT},
 # {input:"\"",   tag:"mtext", output:"mbox", tex:null, ttype:TEXT};
 

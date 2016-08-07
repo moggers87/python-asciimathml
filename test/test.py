@@ -19,7 +19,7 @@ import unittest
 
 from xml.etree.ElementTree import tostring
 
-from asciimathml import parse, El
+from asciimathml import parse, element_factory
 
 import xml.dom.minidom as md
 
@@ -45,14 +45,14 @@ class ParseTestCase(unittest.TestCase):
         self.assertEquals(ppa, ppb)
 
     def testEmpty(self):
-        self.assertTreeEquals(parse(''), El('math', El('mstyle')))
+        self.assertTreeEquals(parse(''), element_factory('math', element_factory('mstyle')))
 
     def testNumber(self):
         self.assertTreeEquals(
             parse('3.1415'),
-            El('math',
-                El('mstyle',
-                    El('mn', text='3.1415')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mn', text='3.1415')
                 )
             )
         )
@@ -60,9 +60,9 @@ class ParseTestCase(unittest.TestCase):
     def testSymbol(self):
         self.assertTreeEquals(
             parse('alpha'),
-            El('math',
-                El('mstyle',
-                    El('mi', text=u'\u03b1')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mi', text=u'\u03b1')
                 )
             )
         )
@@ -70,10 +70,10 @@ class ParseTestCase(unittest.TestCase):
     def testSymbols(self):
         self.assertTreeEquals(
             parse('alpha beta'),
-            El('math',
-                El('mstyle',
-                    El('mi', text=u'\u03b1'),
-                    El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mi', text=u'\u03b1'),
+                    element_factory('mi', text=u'\u03b2')
                 )
             )
         )
@@ -81,11 +81,11 @@ class ParseTestCase(unittest.TestCase):
     def testFrac(self):
         self.assertTreeEquals(
             parse('alpha / beta'),
-            El('math',
-                El('mstyle',
-                    El('mfrac',
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mfrac',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b2')
                     )
                 )
             )
@@ -94,10 +94,10 @@ class ParseTestCase(unittest.TestCase):
     def testText(self):
         self.assertTreeEquals(
             parse('text{undefined}'),
-            El('math',
-                El('mstyle',
-                    El('mrow',
-                        El('mtext', text='undefined')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mtext', text='undefined')
                     )
                 )
             )
@@ -106,14 +106,14 @@ class ParseTestCase(unittest.TestCase):
     def testQuotedText(self):
         self.assertTreeEquals(
             parse('"time" = "money"'),
-            El('math',
-                El('mstyle',
-                    El('mrow',
-                        El('mtext', text='time')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mtext', text='time')
                     ),
-                    El('mo', text='='),
-                    El('mrow',
-                        El('mtext', text='money')
+                    element_factory('mo', text='='),
+                    element_factory('mrow',
+                        element_factory('mtext', text='money')
                     )
                 )
             )
@@ -122,11 +122,11 @@ class ParseTestCase(unittest.TestCase):
     def testIncompleteFrac(self):
         self.assertTreeEquals(
             parse('alpha /'),
-            El('math',
-                El('mstyle',
-                    El('mfrac',
-                        El('mi', text=u'\u03b1'),
-                        El('mo')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mfrac',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mo')
                     )
                 )
             )
@@ -135,11 +135,11 @@ class ParseTestCase(unittest.TestCase):
     def testDivision(self):
         self.assertTreeEquals(
             parse('alpha // beta'),
-            El('math',
-                El('mstyle',
-                    El('mi', text=u'\u03b1'),
-                    El('mo', text='/'),
-                    El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mi', text=u'\u03b1'),
+                    element_factory('mo', text='/'),
+                    element_factory('mi', text=u'\u03b2')
                 )
             )
         )
@@ -147,11 +147,11 @@ class ParseTestCase(unittest.TestCase):
     def testSub(self):
         self.assertTreeEquals(
             parse('alpha _ beta'),
-            El('math',
-                El('mstyle',
-                    El('msub',
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('msub',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b2')
                     )
                 )
             )
@@ -160,11 +160,11 @@ class ParseTestCase(unittest.TestCase):
     def testSup(self):
         self.assertTreeEquals(
             parse('alpha ^ beta'),
-            El('math',
-                El('mstyle',
-                    El('msup',
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('msup',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b2')
                     )
                 )
             )
@@ -173,12 +173,12 @@ class ParseTestCase(unittest.TestCase):
     def testSubSup(self):
         self.assertTreeEquals(
             parse('alpha _ beta ^ gamma'),
-            El('math',
-                El('mstyle',
-                    El('msubsup',
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b2'),
-                        El('mi', text=u'\u03b3')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('msubsup',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b2'),
+                        element_factory('mi', text=u'\u03b3')
                     )
                 )
             )
@@ -186,12 +186,12 @@ class ParseTestCase(unittest.TestCase):
 
     def testSupSub(self):
         self.assertTreeEquals(parse('alpha ^ beta _ gamma'),
-            El('math',
-                El('mstyle',
-                    El('msubsup',
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b3'),
-                        El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('msubsup',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b3'),
+                        element_factory('mi', text=u'\u03b2')
                     )
                 )
             )
@@ -200,11 +200,11 @@ class ParseTestCase(unittest.TestCase):
     def testUnary(self):
         self.assertTreeEquals(
             parse('sin alpha'),
-            El('math',
-                El('mstyle',
-                    El('mrow',
-                        El('mo', text='sin'),
-                        El('mi', text=u'\u03b1')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mo', text='sin'),
+                        element_factory('mi', text=u'\u03b1')
                     )
                 )
             )
@@ -213,11 +213,11 @@ class ParseTestCase(unittest.TestCase):
     def testUnary2(self):
         self.assertTreeEquals(
             parse('dot alpha'),
-            El('math',
-                El('mstyle',
-                    El('mover',
-                        El('mi', text=u'\u03b1'),
-                        El('mo', text='.'))
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mover',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mo', text='.'))
                 )
             )
         )
@@ -225,10 +225,10 @@ class ParseTestCase(unittest.TestCase):
     def testUnary3(self):
         self.assertTreeEquals(
             parse('sqrt alpha'),
-            El('math',
-                El('mstyle',
-                    El('msqrt',
-                        El('mi', text=u'\u03b1')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('msqrt',
+                        element_factory('mi', text=u'\u03b1')
                     )
                 )
             )
@@ -237,10 +237,10 @@ class ParseTestCase(unittest.TestCase):
     def testUnary4(self):
         self.assertTreeEquals(
             parse('text alpha'),
-            El('math',
-                El('mstyle',
-                    El('mtext',
-                        El('mi', text=u'\u03b1')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mtext',
+                        element_factory('mi', text=u'\u03b1')
                     )
                 )
             )
@@ -249,11 +249,11 @@ class ParseTestCase(unittest.TestCase):
     def testBinary(self):
         self.assertTreeEquals(
             parse('frac alpha beta'),
-            El('math',
-                El('mstyle',
-                    El('mfrac',
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mfrac',
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b2')
                     )
                 )
             )
@@ -280,12 +280,12 @@ class ParseTestCase(unittest.TestCase):
     def testUnderOver(self):
         self.assertTreeEquals(
             parse('sum_alpha^beta'),
-            El('math',
-                El('mstyle',
-                    El('munderover',
-                        El('mo', text=u'\u2211'),
-                        El('mi', text=u'\u03b1'),
-                        El('mi', text=u'\u03b2')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('munderover',
+                        element_factory('mo', text=u'\u2211'),
+                        element_factory('mi', text=u'\u03b1'),
+                        element_factory('mi', text=u'\u03b2')
                     )
                 )
             )
@@ -294,14 +294,14 @@ class ParseTestCase(unittest.TestCase):
     def testParens(self):
         self.assertTreeEquals(
             parse('(alpha + beta) / gamma'),
-            El('math',
-                El('mstyle',
-                    El('mfrac',
-                        El('mrow',
-                            El('mi', text=u'\u03b1'),
-                            El('mo', text='+'),
-                            El('mi', text=u'\u03b2')),
-                        El('mi', text=u'\u03b3')
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mfrac',
+                        element_factory('mrow',
+                            element_factory('mi', text=u'\u03b1'),
+                            element_factory('mo', text='+'),
+                            element_factory('mi', text=u'\u03b2')),
+                        element_factory('mi', text=u'\u03b3')
                     )
                 )
             )
