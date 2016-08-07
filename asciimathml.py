@@ -314,7 +314,21 @@ def parse_exprs(s, nodes=None, inside_parens=False):
                 )
             )
 
-            nodes.append(n)
+            neg_number = (
+                n.tag == 'mrow'
+                and len(n) == 2
+                and n[0].text == '-'
+                and n[1].tag in {'mn', 'mi'}
+            )
+            term_before = (
+                nodes
+                and nodes[-1].tag != 'mo'
+            )
+
+            if neg_number and term_before:
+                nodes.extend(n)
+            else:
+                nodes.append(n)
 
             if truly_closing:
                 if not inside_matrix:
