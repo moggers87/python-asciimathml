@@ -299,9 +299,13 @@ def parse_exprs(s, nodes=None, inside_parens=False):
             if inside_parens and n.text == ',' and is_enclosed_in_parens(nodes[-2]):
                 inside_matrix = True
 
-            if len(nodes) >= 3 and nodes[-2].get('_special_binary'):
+            len_nodes = len(nodes)
+            if len_nodes >= 3 and nodes[-2].get('_special_binary'):
                 transform =  nodes[-2].get('_special_binary')
                 nodes[-3:] = [transform(nodes[-3], nodes[-1])]
+            elif s == '' and len_nodes == 2 and nodes[-1].get('_special_binary'):
+                transform =  nodes[-1].get('_special_binary')
+                nodes[-2:] = [transform(nodes[-2], El("mo"))]
 
         if s == '':
             return '', nodes
