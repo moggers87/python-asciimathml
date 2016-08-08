@@ -637,7 +637,10 @@ symbols["text"] = element_factory("mtext", _arity=1)
 
 symbol_names = sorted(symbols.keys(), key=lambda s: len(s), reverse=True)
 
-if __name__ == '__main__':
+def main(args=None):
+    if args is None:
+        args = sys.argv
+
     from argparse import ArgumentParser
 
     aparser = ArgumentParser(
@@ -660,7 +663,7 @@ if __name__ == '__main__':
         nargs='+',
         help='asciimath text to turn into mathml'
     )
-    args_ns = aparser.parse_args()
+    args_ns = aparser.parse_args(args)
 
     if args_ns.markdown:
         import markdown
@@ -693,3 +696,6 @@ if __name__ == '__main__':
     </body>
 </html>
 """)
+
+if __name__ == '__main__':
+    main()
