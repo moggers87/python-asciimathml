@@ -58,27 +58,54 @@ def strip_parens(n):
 
     return n
 
+def strip_tags(n):
+    return ''.join(e.text for e in n)
+
 def is_enclosed_in_parens(n):
     return n.tag == 'mrow' and n[0].get('_opening', False) and n[-1].get('_closing', False)
 
-def binary(operator, operand_1, operand_2, swap=False):
+def binary(operator, operand_1, operand_2, swap=False, o1_attr=None, o2_attr=None):
     operand_1 = strip_parens(operand_1)
     operand_2 = strip_parens(operand_2)
-    if not swap:
+
+    if swap:
+        operand_1, operand_2 = operand_2, operand_1
+
+    if o1_attr is None:
         operator.append(operand_1)
+    else:
+        operator.attrib[o1_attr] = strip_tags(operand_1)
+
+    if o2_attr is None:
         operator.append(operand_2)
     else:
-        operator.append(operand_2)
-        operator.append(operand_1)
+        operator.attrib[o2_attr] = strip_tags(operand_2)
 
     return operator
 
-def unary(operator, operand, swap=False):
+def unary(operator, operand, swap=False, rewrite_lr=None):
     operand = strip_parens(operand)
-    if swap:
-        operator.insert(0, operand)
+
+    if rewrite_lr is None:
+        rewrite_lr = []
+
+    if rewrite_lr:
+        opener = element_factory("mo", rewrite_lr[0], _opening=True)
+        closer = element_factory("mo", rewrite_lr[1], _closing=True)
+
+        if is_enclosed_in_parens(operand):
+            operand[0] = opener
+            operand[-1] = closer
+            return operand
+        else:
+            operator.append(opener)
+            operator.append(operand)
+            operator.append(closer)
     else:
-        operator.append(operand)
+        if swap:
+            operator.insert(0, operand)
+        else:
+            operator.append(operand)
 
     return operator
 
@@ -252,11 +279,16 @@ def parse_expr(s, siblings, required=False):
             s, n = parse_string(s)
         elif n.get('_arity', 0) == 1:
             s, m = parse_expr(s, [], True)
-            n = unary(n, m, n.get('_swap', False))
+            n = unary(n, m, swap=n.get('_swap', False), rewrite_lr=n.get('_rewrite_lr', []))
         elif n.get('_arity', 0) == 2:
             s, m1 = parse_expr(s, [], True)
             s, m2 = parse_expr(s, [], True)
-            n = binary(n, m1, m2, n.get('_swap', False))
+            n = binary(
+                n, m1, m2,
+                swap=n.get('_swap', False),
+                o1_attr=n.get('_o1_attr', None),
+                o2_attr=n.get('_o2_attr', None)
+            )
 
     return s, n
 
@@ -448,6 +480,8 @@ symbols["iota"] = element_factory("mi", u"\u03B9")
 symbols["kappa"] = element_factory("mi", u"\u03BA")
 symbols["lambda"] = element_factory("mi", u"\u03BB")
 symbols["Lambda"] = element_factory("mo", u"\u039B")
+symbols["lamda"] = element_factory("mi", u"\u03BB")
+symbols["Lamda"] = element_factory("mo", u"\u039B")
 symbols["mu"] = element_factory("mi", u"\u03BC")
 symbols["nu"] = element_factory("mi", u"\u03BD")
 symbols["omega"] = element_factory("mi", u"\u03C9")
@@ -472,7 +506,8 @@ symbols["Xi"] = element_factory("mo", u"\u039E")
 symbols["zeta"] = element_factory("mi", u"\u03B6")
 
 symbols["*"] = element_factory("mo", u"\u22C5")
-symbols["**"] = element_factory("mo", u"\u22C6")
+symbols["**"] = element_factory("mo", u"\u2217")
+symbols["***"] = element_factory("mo", u"\u22C6")
 
 symbols["/"] = element_factory("mo", u"/", _special_binary=frac)
 symbols["^"] = element_factory("mo", u"^", _special_binary=sup)
@@ -481,6 +516,9 @@ symbols["//"] = element_factory("mo", u"/")
 symbols["\\\\"] = element_factory("mo", u"\\")
 symbols["setminus"] = element_factory("mo", u"\\")
 symbols["xx"] = element_factory("mo", u"\u00D7")
+symbols["|><"] = element_factory("mo", u"\u22C9")
+symbols["><|"] = element_factory("mo", u"\u22CA")
+symbols["|><|"] = element_factory("mo", u"\u22C8")
 symbols["-:"] = element_factory("mo", u"\u00F7")
 symbols["@"] = element_factory("mo", u"\u2218")
 symbols["o+"] = element_factory("mo", u"\u2295")
@@ -500,8 +538,10 @@ symbols["uuu"] = element_factory("mo", u"\u22C3", _underover=True)
 symbols["!="] = element_factory("mo", u"\u2260")
 symbols[":="] = element_factory("mo", u":=")
 symbols["lt"] = element_factory("mo", u"<")
+symbols["gt"] = element_factory("mo", u">")
 symbols["<="] = element_factory("mo", u"\u2264")
 symbols["lt="] = element_factory("mo", u"\u2264")
+symbols["gt="] = element_factory("mo", u"\u2265")
 symbols[">="] = element_factory("mo", u"\u2265")
 symbols["geq"] = element_factory("mo", u"\u2265")
 symbols["-<"] = element_factory("mo", u"\u227A")
@@ -564,7 +604,12 @@ symbols["aleph"] = element_factory("mo", u"\u2135")
 symbols["..."] = element_factory("mo", u"...")
 symbols[":."] = element_factory("mo", u"\u2234")
 symbols["/_"] = element_factory("mo", u"\u2220")
+symbols["/_\\"] = element_factory("mo", u"\u25B3")
+symbols["'"] = element_factory("mo", u"\u2032")
+# arity of 1
+symbols["tilde"] = element_factory("mover", element_factory("mo", u"~"), _arity=1, _swap=True)
 symbols["\\ "] = element_factory("mo", u"\u00A0")
+symbols["frown"] = element_factory("mo", u"\u2322")
 symbols["quad"] = element_factory("mo", u"\u00A0\u00A0")
 symbols["qquad"] = element_factory("mo", u"\u00A0\u00A0\u00A0\u00A0")
 symbols["cdots"] = element_factory("mo", u"\u22EF")
@@ -597,6 +642,19 @@ symbols["cot"] = element_factory("mrow", element_factory("mo", "cot"), _arity=1)
 symbols["sec"] = element_factory("mrow", element_factory("mo", "sec"), _arity=1)
 symbols["csc"] = element_factory("mrow", element_factory("mo", "csc"), _arity=1)
 symbols["log"] = element_factory("mrow", element_factory("mo", "log"), _arity=1)
+symbols["arcsin"] = element_factory("mrow", element_factory("mo", "arcsin"), _arity=1)
+symbols["arccos"] = element_factory("mrow", element_factory("mo", "arccos"), _arity=1)
+symbols["arctan"] = element_factory("mrow", element_factory("mo", "arctan"), _arity=1)
+symbols["coth"] = element_factory("mrow", element_factory("mo", "coth"), _arity=1)
+symbols["sech"] = element_factory("mrow", element_factory("mo", "sech"), _arity=1)
+symbols["csch"] = element_factory("mrow", element_factory("mo", "csch"), _arity=1)
+symbols["exp"] = element_factory("mrow", element_factory("mo", "exp"), _arity=1)
+
+symbols["abs"] = element_factory("mrow", element_factory("mo", "abs", _invisible=True), _arity=1, _rewrite_lr=[u"|", u"|"])
+symbols["norm"] = element_factory("mrow", element_factory("mo", "norm", _invisible=True), _arity=1, _rewrite_lr=[u"\u2225", u"\u2225"])
+symbols["floor"] = element_factory("mrow", element_factory("mo", "floor", _invisible=True), _arity=1, _rewrite_lr=[u"\u230A", u"\u230B"])
+symbols["ceil"] = element_factory("mrow", element_factory("mo", "ceil", _invisible=True), _arity=1, _rewrite_lr=[u"\u2308", u"\u2309"])
+
 symbols["ln"] = element_factory("mrow", element_factory("mo", "ln"), _arity=1)
 symbols["det"] = element_factory("mrow", element_factory("mo", "det"), _arity=1)
 symbols["gcd"] = element_factory("mrow", element_factory("mo", "gcd"), _arity=1)
@@ -625,13 +683,51 @@ symbols["vec"] = element_factory("mover", element_factory("mo", u"\u2192"), _ari
 symbols["dot"] = element_factory("mover", element_factory("mo", u"."), _arity=1, _swap=1)
 symbols["ddot"] = element_factory("mover", element_factory("mo", u".."), _arity=1, _swap=1)
 symbols["ul"] = element_factory("munder", element_factory("mo", u"\u0332"), _arity=1, _swap=1)
+symbols["ubrace"] = element_factory("munder", element_factory("mo",  "\u23DF"), _swap=True, _arity=1)
+symbols["obrace"] = element_factory("mover", element_factory("mo", "\u23DE"), _swap=True, _arity=1)
 
 symbols["sqrt"] = element_factory("msqrt", _arity=1)
 symbols["root"] = element_factory("mroot", _arity=2, _swap=True)
 symbols["frac"] = element_factory("mfrac", _arity=2)
-symbols["stackrel"] = element_factory("mover", _arity=2)
+
+# the base is the first argument
+# the second argument is where effect applies
+symbols["stackrel"] = element_factory("mover", _arity=2, _swap=True)
+symbols["overset"] = element_factory("mover", _arity=2, _swap=True)
+symbols["underset"] = element_factory("munder", _arity=2, _swap=True)
 
 symbols["text"] = element_factory("mtext", _arity=1)
+symbols["mbox"] = element_factory("mtext", _arity=1)
+
+# sets mathcolor attrib
+
+symbols["color"] = element_factory("mstyle", _arity=2, _o1_attr="mathcolor")
+symbols["cancel"] = element_factory("menclose", _arity=1, notation="updiagonalstrike")
+
+# new style tags
+## bold
+symbols["bb"] = element_factory("mstyle", _arity=1, fontweight="bold")
+symbols["mathbf"] = element_factory("mstyle", _arity=1, fontweight="bold")
+
+## sans
+symbols["sf"] = element_factory("mstyle", _arity=1, fontfamily="sans")
+symbols["mathsf"] = element_factory("mstyle", _arity=1, fontfamily="sans")
+
+## double-struck
+symbols["bbb"] = element_factory("mstyle", _arity=1, mathvariant="double-struck")
+symbols["mathbb"] = element_factory("mstyle", _arity=1, mathvariant="double-struck")
+
+## script
+symbols["cc"] = element_factory("mstyle", _arity=1, mathvariant="script")
+symbols["mathcal"] = element_factory("mstyle", _arity=1, mathvariant="script")
+
+## monospace
+symbols["tt"] = element_factory("mstyle", _arity=1, fontfamily="monospace")
+symbols["mathtt"] = element_factory("mstyle", _arity=1, fontfamily="monospace")
+
+## fraktur
+symbols["fr"] = element_factory("mstyle", _arity=1, mathvariant="fraktur")
+symbols["mathfrak"] = element_factory("mstyle", _arity=1, mathvariant="fraktur")
 # {input:"mbox", tag:"mtext", output:"mbox", tex:null, ttype:TEXT},
 # {input:"\"",   tag:"mtext", output:"mbox", tex:null, ttype:TEXT};
 
@@ -639,7 +735,7 @@ symbol_names = sorted(symbols.keys(), key=lambda s: len(s), reverse=True)
 
 def main(args=None):
     if args is None:
-        args = sys.argv
+        args = sys.argv[1:]
 
     from argparse import ArgumentParser
 

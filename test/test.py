@@ -291,6 +291,19 @@ class ParseTestCase(unittest.TestCase):
             )
         )
 
+    def testColor(self):
+        self.assertTreeEquals(
+            parse('color (blue) x'),
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mstyle',
+                        element_factory('mi', text=u'x'),
+                        mathcolor='blue'
+                    )
+                )
+            )
+        )
+
     def testParens(self):
         self.assertTreeEquals(
             parse('(alpha + beta) / gamma'),
@@ -516,6 +529,38 @@ class ParseTestCase(unittest.TestCase):
                 '</mrow>'
                 '<mn>2</mn>'
             '</msup>'
+        )
+
+    def testRewriteLRAdditive(self):
+        self.assertTreeEquals(
+            parse('floor A'),
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mo', u"\u230A"),
+                        element_factory('mi', 'A'),
+                        element_factory('mo', u"\u230B")
+                    )
+                )
+            )
+        )
+
+    def testRewriteLRReplace(self):
+        self.assertTreeEquals(
+            parse('abs(xyz)'),
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mo', u"|"),
+                        element_factory('mrow',
+                            element_factory('mi', 'x'),
+                            element_factory('mi', 'y'),
+                            element_factory('mi', 'z'),
+                        ),
+                        element_factory('mo', u"|")
+                    )
+                )
+            )
         )
 
 if __name__ == '__main__':
