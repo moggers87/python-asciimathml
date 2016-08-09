@@ -560,6 +560,24 @@ class ParseTestCase(unittest.TestCase):
             )
         )
 
+    def tesRewriteLRNested(self):
+        self.assertTreeEquals(
+            parse('floor abs A'),
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mo', u"\u230A"),
+                        element_factory('mrow',
+                            element_factory('mo', '|'),
+                            element_factory('mi', 'A'),
+                            element_factory('mo', '|')
+                        ),
+                        element_factory('mo', u"\u230B")
+                    )
+                )
+            )
+        )
+
     def testRewriteLRReplace(self):
         self.assertTreeEquals(
             parse('abs(xyz)'),
