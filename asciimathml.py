@@ -30,7 +30,7 @@ QUOTED_STRING_RE = re.compile(r'"([^"]*)"')
 
 def text_check(text):
     py2str = (sys.version_info.major == 2 and isinstance(text, basestring))
-    py3str = (sys.version_info.major == 3 and isinstance(text, str))
+    py3str = (sys.version_info.major >= 3 and isinstance(text, str))
 
     return (py3str or py2str)
 
@@ -783,7 +783,7 @@ def main(args=None):
     <body>
 """)
     result = parse(' '.join(args_ns.text), element)
-    if sys.version_info.major == 3:
+    if sys.version_info.major >= 3:
         encoding = 'unicode'
     else:
         encoding = 'utf-8'
