@@ -15,6 +15,8 @@
 
 from __future__ import print_function
 
+from itertools import chain
+
 import re
 import sys
 
@@ -277,7 +279,7 @@ def parse_expr(s, siblings, required=False):
 
         if parens_nest:
             if sym_paren:
-                n = element_factory('mrow', *siblings[prev_sib_pos:], n)
+                n = element_factory('mrow', *chain(siblings[prev_sib_pos:], [n]))
                 del siblings[prev_sib_pos:]
             else:
                 s, children = parse_exprs(s, [n], inside_parens=True)
