@@ -148,18 +148,18 @@ def sup(base, superscript):
 
 def parse(s, element=Element, atomicstring=lambda s: s):
     """
-Translates from ASCIIMathML (an easy to type and highly readable way to
-represent math formulas) into MathML (a w3c standard directly displayable by
-some web browsers).
+    Translates from ASCIIMathML (an easy to type and highly readable way to
+    represent math formulas) into MathML (a w3c standard directly displayable by
+    some web browsers).
 
-The function `parse()` generates a tree of elements:
+    The function `parse()` generates a tree of elements:
 
     >>> import asciimathml
     >>> asciimathml.parse('sqrt 2')
     <Element math at b76fb28c>
 
-The tree can then be manipulated using the standard python library.  For
-example we can generate its string representation:
+    The tree can then be manipulated using the standard python library.  For
+    example we can generate its string representation:
 
     >>> from xml.etree.ElementTree import tostring
     >>> tostring(asciimathml.parse('sqrt 2'))
