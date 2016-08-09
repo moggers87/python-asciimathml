@@ -17,13 +17,13 @@ from distutils.core import setup
 setup(
     name = "asciimathml",
     py_modules = ["asciimathml", "mdx_asciimathml"],
-    version = "0.9.5",
+    version = "0.9.5.1",
     description = "ASCIIMathML to MathML translator",
     author = "Gabriele Favalessa",
     author_email = "favalex@gmail.com",
     maintainer = 'ShadowKyogre',
     maintainer_email = "shadowkyogre.public@gmail.com",
-    url = "http://github.com/favalex/python-asciimathml",
+    url = "http://github.com/ShadowKyogre/python-asciimathml",
     keywords = ["markup", "math", "mathml", "xml", "markdown"],
     classifiers = [
         "Programming Language :: Python",
