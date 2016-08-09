@@ -188,7 +188,15 @@ def parse_string(s):
 
         text = s[1:end]
         s = s[end+1:]
-        return s, element_factory('mrow', element_factory('mtext', text))
+
+        children = []
+        if text.startswith(' '):
+            children.append(element_factory('mspace', width='1ex'))
+        children.append(element_factory('mtext', text))
+        if text.endswith(' '):
+            children.append(element_factory('mspace', width='1ex'))
+
+        return s, element_factory('mrow', *children)
     else:
         s, text = parse_m(s)
         return s, element_factory('mtext', text)
@@ -430,9 +438,17 @@ def parse_m(s, required=False):
     m = QUOTED_STRING_RE.match(s)
     if m:
         text = m.group(1)
+
+        children = []
+        if text.startswith(' '):
+            children.append(element_factory('mspace', width='1ex'))
+        children.append(element_factory('mtext', text))
+        if text.endswith(' '):
+            children.append(element_factory('mspace', width='1ex'))
+
         return s[m.end():], element_factory(
             'mrow',
-            element_factory('mtext', text)
+            *children
         )
 
     m = NUMBER_RE.match(s)

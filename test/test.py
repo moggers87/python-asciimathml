@@ -119,6 +119,21 @@ class ParseTestCase(unittest.TestCase):
             )
         )
 
+    def testQuotedSpaces(self):
+        self.assertTreeEquals(
+            parse('" a  b c   " x'),
+            element_factory('math',
+                element_factory('mstyle',
+                    element_factory('mrow',
+                        element_factory('mspace', width='1ex'),
+                        element_factory('mtext', text=' a  b c   '),
+                        element_factory('mspace', width='1ex'),
+                    ),
+                    element_factory('mi', text='x'),
+                )
+            )
+        )
+
     def testIncompleteFrac(self):
         self.assertTreeEquals(
             parse('alpha /'),
