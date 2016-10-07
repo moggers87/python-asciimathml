@@ -2,8 +2,6 @@
 
 [![Build Status](https://travis-ci.org/ShadowKyogre/python-asciimathml.svg?branch=master)](https://travis-ci.org/ShadowKyogre/python-asciimathml)
 
-**NOTE:** You should be checking out [the more maintained copy](https://github.com/ShadowKyogre/python-asciimathml).
-
 This small python module exports a single function, `parse()`, which parses a
 string containing [ASCIIMathML][ASCIIMathML] and returns the corresponding
 MathML tree as an [xml.etree.ElementTree][etree] instance.
@@ -48,7 +46,7 @@ And this is an example of ASCIIMathML embedded in markdown:
 
 ## Dependencies and installation
 
-Tested with python 2.7.  The core module, `asciimathml` has no dependencies.
+Tested with python 2.7 and python 3.4.  The core module, `asciimathml` has no dependencies.
 The markdown extension `mdx_asciimathml` requires at least markdown 2.0.
 
 A standard `setup.py` is provided (as usual it's enough to execute `python
@@ -60,19 +58,11 @@ your PYTHONPATH.
 
 The current status of support for MathML by web browsers is disheartening.
 
-As far as I know only firefox and opera, among the major browsers, can properly
+Only [Firefox and Safari](http://caniuse.com/#feat=mathml), among the major browsers, can properly
 render MathML (webkit support is on the way, you can follow progress made
 closing the tickets of this master [bug][bug]).
 
 [bug]: https://bugs.webkit.org/show_bug.cgi?id=3251
 
-But please note that MathML is displayed correctly only when embedded in a
+Also note that MathML is displayed correctly only when embedded in a
 XHTML or in HTML5 document.
-
-XHTML must be served with content type 'application/xhtml+xml' (it's not enough
-for the document to be valid XHTML).  As you know this will prevent IE (up to
-IE8, I haven't tested with IE9) from displaying the page at all.
-
-HTML5 on the other hand is backwards compatible, but is not enabled by default
-on the current version of firefox (3.6).  The user must enable it explicitly by
-setting to true 'html5' in about:config.
