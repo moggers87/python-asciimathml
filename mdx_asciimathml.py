@@ -24,7 +24,7 @@ class ASCIIMathMLExtension(markdown.Extension):
     def extendMarkdown(self, md, md_globals):
         self.md = md
 
-        RE = re.compile(r'^(.*)\$\$([^\$]*)\$\$(.*)$', re.M) # $$ a $$
+        RE = re.compile(r'^(.*?)\$\$([^\$]*)\$\$(.*?)!', re.M) # $$ a $$
 
         md.inlinePatterns.add('', ASCIIMathMLPattern(RE), '_begin')
 
@@ -33,7 +33,7 @@ class ASCIIMathMLExtension(markdown.Extension):
 
 class ASCIIMathMLPattern(markdown.inlinepatterns.Pattern):
     def getCompiledRegExp(self):
-        return re.compile(r'^(.*)\$\$([^\$]*)\$\$(.*)$', re.M) # $$ a $$
+        return re.compile(r'^(.*?)\$\$([^\$]*)\$\$(.*?)!', re.M) # $$ a $$
 
     def handleMatch(self, m):
         if markdown.version_info < (2, 1, 0):
