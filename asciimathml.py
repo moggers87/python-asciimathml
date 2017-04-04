@@ -701,8 +701,8 @@ symbols["vec"] = element_factory("mover", element_factory("mo", u"\u2192"), _ari
 symbols["dot"] = element_factory("mover", element_factory("mo", u"."), _arity=1, _swap=1)
 symbols["ddot"] = element_factory("mover", element_factory("mo", u".."), _arity=1, _swap=1)
 symbols["ul"] = element_factory("munder", element_factory("mo", u"\u0332"), _arity=1, _swap=1)
-symbols["ubrace"] = element_factory("munder", element_factory("mo",  "\u23DF"), _swap=True, _arity=1)
-symbols["obrace"] = element_factory("mover", element_factory("mo", "\u23DE"), _swap=True, _arity=1)
+symbols["ubrace"] = element_factory("munder", element_factory("mo",  u"\u23DF"), _swap=True, _arity=1)
+symbols["obrace"] = element_factory("mover", element_factory("mo", u"\u23DE"), _swap=True, _arity=1)
 
 symbols["sqrt"] = element_factory("msqrt", _arity=1)
 symbols["root"] = element_factory("mroot", _arity=2, _swap=True)
