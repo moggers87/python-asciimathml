@@ -2,11 +2,10 @@ import unittest
 import xml.dom.minidom as md
 from xml.etree.ElementTree import tostring
 
+import sys
+
 from asciimathml import element_factory
 import markdown
-
-def pretty_print(s):
-    return md.parseString(s).toprettyxml(indent='  ')
 
 class MkdTestCase(unittest.TestCase):
     def testTwoLines(self):
@@ -37,10 +36,12 @@ class MkdTestCase(unittest.TestCase):
         )
         formula.set('xmlns', 'http://www.w3.org/1998/Math/MathML')
 
+        enc = 'unicode' if sys.version_info.major >= 3 else 'utf-8'
+
         expected = (
             '<p>First line containing the formula {0}.\n'
             'The second line should be here.</p>'
-        ).format(tostring(formula, encoding='unicode').strip())
+        ).format(tostring(formula, encoding=enc).strip())
 
         self.assertEquals(
             output,
