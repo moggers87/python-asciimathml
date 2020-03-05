@@ -19,7 +19,7 @@ from xml.etree.ElementTree import tostring
 import unittest
 import xml.dom.minidom as md
 
-from asciimathml import parse, element_factory
+from asciimathml import element_factory, parse
 
 
 def pretty_print(s):

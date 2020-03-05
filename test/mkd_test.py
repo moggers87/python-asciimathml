@@ -1,7 +1,6 @@
-import unittest
 from xml.etree.ElementTree import tostring
-
 import sys
+import unittest
 
 from asciimathml import element_factory
 import markdown
@@ -16,7 +15,7 @@ class MkdTestCase(unittest.TestCase):
                 'First line containing the formula $$f(x)=x^2$$.\n'
                 'The second line should be here.'
             ),
-            ["asciimathml"]
+            extensions=["asciimathml"]
         )
 
         formula = element_factory(

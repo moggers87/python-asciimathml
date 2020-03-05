@@ -18,6 +18,8 @@ from xml.etree.ElementTree import Element, tostring
 import re
 import sys
 
+from mdx_asciimathml import makeExtension  # noqa
+
 __all__ = ['parse']
 
 DELIMITERS = {'{': '}', '(': ')', '[': ']'}
