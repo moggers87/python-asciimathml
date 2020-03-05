@@ -1,11 +1,11 @@
 import unittest
-import xml.dom.minidom as md
 from xml.etree.ElementTree import tostring
 
 import sys
 
 from asciimathml import element_factory
 import markdown
+
 
 class MkdTestCase(unittest.TestCase):
     def testTwoLines(self):
@@ -19,16 +19,20 @@ class MkdTestCase(unittest.TestCase):
             ["asciimathml"]
         )
 
-        formula = element_factory('math',
-            element_factory('mstyle',
+        formula = element_factory(
+            'math',
+            element_factory(
+                'mstyle',
                 element_factory('mi', text='f'),
-                element_factory('mrow',
+                element_factory(
+                    'mrow',
                     element_factory('mo', text='('),
                     element_factory('mi', text='x'),
                     element_factory('mo', text=')')
                 ),
                 element_factory('mo', text='='),
-                element_factory('msup',
+                element_factory(
+                    'msup',
                     element_factory('mi', text='x'),
                     element_factory('mn', text='2')
                 )
@@ -43,7 +47,4 @@ class MkdTestCase(unittest.TestCase):
             'The second line should be here.</p>'
         ).format(tostring(formula, encoding=enc).strip())
 
-        self.assertEquals(
-            output,
-            expected
-        )
+        self.assertEquals(output, expected)

@@ -16,17 +16,17 @@
 from setuptools import setup
 
 setup(
-    name = "asciimathml",
-    py_modules = ["asciimathml", "mdx_asciimathml"],
-    version = "0.9.5.1",
-    description = "ASCIIMathML to MathML translator",
-    author = "Gabriele Favalessa",
-    author_email = "favalex@gmail.com",
-    maintainer = 'ShadowKyogre',
-    maintainer_email = "shadowkyogre.public@gmail.com",
-    url = "http://github.com/ShadowKyogre/python-asciimathml",
-    keywords = ["markup", "math", "mathml", "xml", "markdown"],
-    classifiers = [
+    name="asciimathml",
+    py_modules=["asciimathml", "mdx_asciimathml"],
+    version="0.9.5.1",
+    description="ASCIIMathML to MathML translator",
+    author="Gabriele Favalessa",
+    author_email="favalex@gmail.com",
+    maintainer='ShadowKyogre',
+    maintainer_email="shadowkyogre.public@gmail.com",
+    url="http://github.com/ShadowKyogre/python-asciimathml",
+    keywords=["markup", "math", "mathml", "xml", "markdown"],
+    classifiers=[
         "Programming Language :: Python",
         "Development Status :: 4 - Beta",
         "Environment :: Other Environment",
@@ -36,9 +36,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Text Processing :: Markup :: XML"
         ],
-    test_suite = "test",
+    test_suite="test",
     tests_require=["markdown"],
-    long_description = """\
+    long_description="""\
 Translates from ASCIIMathML (an easy to type and highly readable way to
 represent math formulas) into Presentation MathML (a w3c standard directly
 displayable by some web browsers).

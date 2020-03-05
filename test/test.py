@@ -15,16 +15,16 @@
 
 # -*- coding: utf-8 -*-
 
-import unittest
-
 from xml.etree.ElementTree import tostring
+import unittest
+import xml.dom.minidom as md
 
 from asciimathml import parse, element_factory
 
-import xml.dom.minidom as md
 
 def pretty_print(s):
     return md.parseString(s).toprettyxml(indent='  ')
+
 
 class ParseTestCase(unittest.TestCase):
     maxDiff = None
@@ -50,28 +50,22 @@ class ParseTestCase(unittest.TestCase):
     def testNumber(self):
         self.assertTreeEquals(
             parse('3.1415'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mn', text='3.1415')
-                )
-            )
+            element_factory('math', element_factory('mstyle', element_factory('mn', text='3.1415')))
         )
 
     def testSymbol(self):
         self.assertTreeEquals(
             parse('alpha'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mi', text=u'\u03b1')
-                )
-            )
+            element_factory('math', element_factory('mstyle', element_factory('mi', text=u'\u03b1')))
         )
 
     def testSymbols(self):
         self.assertTreeEquals(
             parse('alpha beta'),
-            element_factory('math',
-                element_factory('mstyle',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
                     element_factory('mi', text=u'\u03b1'),
                     element_factory('mi', text=u'\u03b2')
                 )
@@ -81,9 +75,12 @@ class ParseTestCase(unittest.TestCase):
     def testFrac(self):
         self.assertTreeEquals(
             parse('alpha / beta'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mfrac',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mfrac',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b2')
                     )
@@ -94,27 +91,22 @@ class ParseTestCase(unittest.TestCase):
     def testText(self):
         self.assertTreeEquals(
             parse('text{undefined}'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
-                        element_factory('mtext', text='undefined')
-                    )
-                )
+            element_factory(
+                'math',
+                element_factory('mstyle', element_factory('mrow', element_factory('mtext', text='undefined')))
             )
         )
 
     def testQuotedText(self):
         self.assertTreeEquals(
             parse('"time" = "money"'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
-                        element_factory('mtext', text='time')
-                    ),
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory('mrow', element_factory('mtext', text='time')),
                     element_factory('mo', text='='),
-                    element_factory('mrow',
-                        element_factory('mtext', text='money')
-                    )
+                    element_factory('mrow', element_factory('mtext', text='money'))
                 )
             )
         )
@@ -122,9 +114,12 @@ class ParseTestCase(unittest.TestCase):
     def testQuotedSpaces(self):
         self.assertTreeEquals(
             parse('" a  b c   " x'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mrow',
                         element_factory('mspace', width='1ex'),
                         element_factory('mtext', text=' a  b c   '),
                         element_factory('mspace', width='1ex'),
@@ -137,12 +132,11 @@ class ParseTestCase(unittest.TestCase):
     def testIncompleteFrac(self):
         self.assertTreeEquals(
             parse('alpha /'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mfrac',
-                        element_factory('mi', text=u'\u03b1'),
-                        element_factory('mo')
-                    )
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory('mfrac', element_factory('mi', text=u'\u03b1'), element_factory('mo'))
                 )
             )
         )
@@ -150,8 +144,10 @@ class ParseTestCase(unittest.TestCase):
     def testDivision(self):
         self.assertTreeEquals(
             parse('alpha // beta'),
-            element_factory('math',
-                element_factory('mstyle',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
                     element_factory('mi', text=u'\u03b1'),
                     element_factory('mo', text='/'),
                     element_factory('mi', text=u'\u03b2')
@@ -162,9 +158,12 @@ class ParseTestCase(unittest.TestCase):
     def testSub(self):
         self.assertTreeEquals(
             parse('alpha _ beta'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('msub',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'msub',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b2')
                     )
@@ -175,9 +174,12 @@ class ParseTestCase(unittest.TestCase):
     def testSup(self):
         self.assertTreeEquals(
             parse('alpha ^ beta'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('msup',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'msup',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b2')
                     )
@@ -188,9 +190,12 @@ class ParseTestCase(unittest.TestCase):
     def testSubSup(self):
         self.assertTreeEquals(
             parse('alpha _ beta ^ gamma'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('msubsup',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'msubsup',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b2'),
                         element_factory('mi', text=u'\u03b3')
@@ -200,10 +205,14 @@ class ParseTestCase(unittest.TestCase):
         )
 
     def testSupSub(self):
-        self.assertTreeEquals(parse('alpha ^ beta _ gamma'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('msubsup',
+        self.assertTreeEquals(
+            parse('alpha ^ beta _ gamma'),
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'msubsup',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b3'),
                         element_factory('mi', text=u'\u03b2')
@@ -215,9 +224,12 @@ class ParseTestCase(unittest.TestCase):
     def testUnary(self):
         self.assertTreeEquals(
             parse('sin alpha'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mrow',
                         element_factory('mo', text='sin'),
                         element_factory('mi', text=u'\u03b1')
                     )
@@ -228,9 +240,12 @@ class ParseTestCase(unittest.TestCase):
     def testUnary2(self):
         self.assertTreeEquals(
             parse('dot alpha'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mover',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mover',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mo', text='.'))
                 )
@@ -240,11 +255,11 @@ class ParseTestCase(unittest.TestCase):
     def testUnary3(self):
         self.assertTreeEquals(
             parse('sqrt alpha'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('msqrt',
-                        element_factory('mi', text=u'\u03b1')
-                    )
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory('msqrt', element_factory('mi', text=u'\u03b1'))
                 )
             )
         )
@@ -252,11 +267,11 @@ class ParseTestCase(unittest.TestCase):
     def testUnary4(self):
         self.assertTreeEquals(
             parse('text alpha'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mtext',
-                        element_factory('mi', text=u'\u03b1')
-                    )
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory('mtext', element_factory('mi', text=u'\u03b1'))
                 )
             )
         )
@@ -264,9 +279,12 @@ class ParseTestCase(unittest.TestCase):
     def testBinary(self):
         self.assertTreeEquals(
             parse('frac alpha beta'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mfrac',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mfrac',
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b2')
                     )
@@ -282,22 +300,25 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             'a/b/c/d',
             '<mfrac>'
-                '<mi>a</mi>'
-                '<mi>b</mi>'
+            '<mi>a</mi>'
+            '<mi>b</mi>'
             '</mfrac>'
             '<mo>/</mo>'
             '<mfrac>'
-                '<mi>c</mi>'
-                '<mi>d</mi>'
+            '<mi>c</mi>'
+            '<mi>d</mi>'
             '</mfrac>'
         )
 
     def testUnderOver(self):
         self.assertTreeEquals(
             parse('sum_alpha^beta'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('munderover',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'munderover',
                         element_factory('mo', text=u'\u2211'),
                         element_factory('mi', text=u'\u03b1'),
                         element_factory('mi', text=u'\u03b2')
@@ -309,9 +330,12 @@ class ParseTestCase(unittest.TestCase):
     def testColor(self):
         self.assertTreeEquals(
             parse('color (blue) x'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mstyle',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mstyle',
                         element_factory('mi', text=u'x'),
                         mathcolor='blue'
                     )
@@ -322,10 +346,14 @@ class ParseTestCase(unittest.TestCase):
     def testParens(self):
         self.assertTreeEquals(
             parse('(alpha + beta) / gamma'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mfrac',
-                        element_factory('mrow',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mfrac',
+                        element_factory(
+                            'mrow',
                             element_factory('mi', text=u'\u03b1'),
                             element_factory('mo', text='+'),
                             element_factory('mi', text=u'\u03b2')),
@@ -339,13 +367,13 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             '(alpha + beta / gamma',
             '<mrow>'
-                '<mo>(</mo>'
-                '<mi>&#945;</mi>'
-                '<mo>+</mo>'
-                '<mfrac>'
-                    '<mi>&#946;</mi>'
-                    '<mi>&#947;</mi>'
-                '</mfrac>'
+            '<mo>(</mo>'
+            '<mi>&#945;</mi>'
+            '<mo>+</mo>'
+            '<mfrac>'
+            '<mi>&#946;</mi>'
+            '<mi>&#947;</mi>'
+            '</mfrac>'
             '</mrow>'
         )
 
@@ -353,21 +381,21 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             '(alpha + [ beta + { gamma } ] )',
             '<mrow>'
-                '<mo>(</mo>'
-                '<mi>&#945;</mi>'
-                '<mo>+</mo>'
-                '<mrow>'
-                    '<mo>[</mo>'
-                    '<mi>&#946;</mi>'
-                    '<mo>+</mo>'
-                    '<mrow>'
-                        '<mo>{</mo>'
-                        '<mi>&#947;</mi>'
-                        '<mo>}</mo>'
-                    '</mrow>'
-                    '<mo>]</mo>'
-                '</mrow>'
-                '<mo>)</mo>'
+            '<mo>(</mo>'
+            '<mi>&#945;</mi>'
+            '<mo>+</mo>'
+            '<mrow>'
+            '<mo>[</mo>'
+            '<mi>&#946;</mi>'
+            '<mo>+</mo>'
+            '<mrow>'
+            '<mo>{</mo>'
+            '<mi>&#947;</mi>'
+            '<mo>}</mo>'
+            '</mrow>'
+            '<mo>]</mo>'
+            '</mrow>'
+            '<mo>)</mo>'
             '</mrow>'
         )
 
@@ -375,12 +403,12 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             'sqrt sqrt root3x',
             '<msqrt>'
-                '<msqrt>'
-                    '<mroot>'
-                        '<mi>x</mi>'
-                        '<mn>3</mn>'
-                    '</mroot>'
-                '</msqrt>'
+            '<msqrt>'
+            '<mroot>'
+            '<mi>x</mi>'
+            '<mn>3</mn>'
+            '</mroot>'
+            '</msqrt>'
             '</msqrt>'
         )
 
@@ -391,11 +419,11 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             '{x | y}',
             '<mrow>'
-                '<mo>{</mo>'
-                '<mi>x</mi>'
-                '<mo>|</mo>'
-                '<mi>y</mi>'
-                '<mo>}</mo>'
+            '<mo>{</mo>'
+            '<mi>x</mi>'
+            '<mo>|</mo>'
+            '<mi>y</mi>'
+            '<mo>}</mo>'
             '</mrow>'
         )
 
@@ -407,11 +435,11 @@ class ParseTestCase(unittest.TestCase):
             '<mi>c</mi>'
             '<mo>-</mo>'
             '<msup>'
-                '<mn>123.45</mn>'
-                '<mrow>'
-                    '<mo>-</mo>'
-                    '<mn>1.1</mn>'
-                '</mrow>'
+            '<mn>123.45</mn>'
+            '<mrow>'
+            '<mo>-</mo>'
+            '<mn>1.1</mn>'
+            '</mrow>'
             '</msup>'
         )
 
@@ -419,34 +447,34 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             'hat(ab) bar(xy) ulA vec v dotx ddot y',
             '<mover>'
-                '<mrow>'
-                    '<mi>a</mi>'
-                    '<mi>b</mi>'
-                '</mrow>'
-                '<mo>^</mo>'
+            '<mrow>'
+            '<mi>a</mi>'
+            '<mi>b</mi>'
+            '</mrow>'
+            '<mo>^</mo>'
             '</mover>'
             '<mover>'
-                '<mrow>'
-                    '<mi>x</mi>'
-                    '<mi>y</mi>'
-                '</mrow>'
-                '<mo>&#175;</mo>'
+            '<mrow>'
+            '<mi>x</mi>'
+            '<mi>y</mi>'
+            '</mrow>'
+            '<mo>&#175;</mo>'
             '</mover>'
             '<munder>'
-                '<mi>A</mi>'
-                '<mo>&#818;</mo>'
+            '<mi>A</mi>'
+            '<mo>&#818;</mo>'
             '</munder>'
             '<mover>'
-                '<mi>v</mi>'
-                '<mo>&#8594;</mo>'
+            '<mi>v</mi>'
+            '<mo>&#8594;</mo>'
             '</mover>'
             '<mover>'
-                '<mi>x</mi>'
-                '<mo>.</mo>'
+            '<mi>x</mi>'
+            '<mo>.</mo>'
             '</mover>'
             '<mover>'
-                '<mi>y</mi>'
-                '<mo>..</mo>'
+            '<mi>y</mi>'
+            '<mo>..</mo>'
             '</mover>'
         )
 
@@ -454,78 +482,78 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             '[[a,b],[c,d]]((n),(k))',
             '<mrow>'
-                '<mo>[</mo>'
-                '<mtable>'
-                    '<mtr>'
-                        '<mtd>'
-                            '<mi>a</mi>'
-                        '</mtd>'
-                        '<mtd>'
-                            '<mi>b</mi>'
-                        '</mtd>'
-                    '</mtr>'
-                    '<mtr>'
-                        '<mtd>'
-                            '<mi>c</mi>'
-                        '</mtd>'
-                        '<mtd>'
-                            '<mi>d</mi>'
-                        '</mtd>'
-                    '</mtr>'
-                '</mtable>'
-                '<mo>]</mo>'
+            '<mo>[</mo>'
+            '<mtable>'
+            '<mtr>'
+            '<mtd>'
+            '<mi>a</mi>'
+            '</mtd>'
+            '<mtd>'
+            '<mi>b</mi>'
+            '</mtd>'
+            '</mtr>'
+            '<mtr>'
+            '<mtd>'
+            '<mi>c</mi>'
+            '</mtd>'
+            '<mtd>'
+            '<mi>d</mi>'
+            '</mtd>'
+            '</mtr>'
+            '</mtable>'
+            '<mo>]</mo>'
             '</mrow>'
             '<mrow>'
-                '<mo>(</mo>'
-                '<mtable>'
-                    '<mtr>'
-                        '<mtd>'
-                            '<mi>n</mi>'
-                        '</mtd>'
-                    '</mtr>'
-                    '<mtr>'
-                        '<mtd>'
-                            '<mi>k</mi>'
-                        '</mtd>'
-                    '</mtr>'
-                '</mtable>'
-                '<mo>)</mo>'
+            '<mo>(</mo>'
+            '<mtable>'
+            '<mtr>'
+            '<mtd>'
+            '<mi>n</mi>'
+            '</mtd>'
+            '</mtr>'
+            '<mtr>'
+            '<mtd>'
+            '<mi>k</mi>'
+            '</mtd>'
+            '</mtr>'
+            '</mtable>'
+            '<mo>)</mo>'
             '</mrow>'
         )
 
     def testMatrix2(self):
         self.assertRendersTo(
-            'x/x={(1,if x!=0),(text{undefined},if x=0):}', # columnalign="left"
+            'x/x={(1,if x!=0),(text{undefined},if x=0):}',  # columnalign="left"
             '<mfrac><mi>x</mi><mi>x</mi></mfrac>'
             '<mo>=</mo>'
             '<mrow>'
-                '<mo>{</mo>'
-                '<mtable>'
-                '<mtr>'
-                    '<mtd><mn>1</mn></mtd>'
-                    '<mtd>'
-                        '<mrow><mspace width="1ex" /><mo>if</mo><mspace width="1ex" /></mrow>'
-                        '<mi>x</mi>'
-                        '<mo>&#8800;</mo>'
-                        '<mn>0</mn>'
-                    '</mtd>'
-                '</mtr>'
-                '<mtr>'
-                    '<mtd>'
-                        '<mrow><mtext>undefined</mtext></mrow>'
-                    '</mtd>'
-                    '<mtd>'
-                        '<mrow>'
-                            '<mspace width="1ex" />'
-                            '<mo>if</mo>'
-                            '<mspace width="1ex" />'
-                        '</mrow>'
-                        '<mi>x</mi>'
-                        '<mo>=</mo>'
-                        '<mn>0</mn>'
-                    '</mtd>'
-                '</mtr>'
-                '</mtable>'
+            '<mo>{</mo>'
+            '<mtable>'
+            '<mtr>'
+            '<mtd><mn>1</mn></mtd>'
+            '<mtd>'
+            '<mrow><mspace width="1ex" /><mo>if</mo><mspace width="1ex" /></mrow>'
+            '<mi>x</mi>'
+            '<mo>&#8800;</mo>'
+            '<mn>0</mn>'
+            '</mtd>'
+            '</mtr>'
+            '<mtr>'
+            '<mtd>'
+            '<mrow><mtext>undefined</mtext></mrow>'
+            '</mtd>'
+            '<mtd>'
+            '<mrow>'
+            '<mspace width="1ex" />'
+            '<mo>if</mo>'
+            '<mspace width="1ex" />'
+            '</mrow>'
+            '<mi>x</mi>'
+            '<mo>=</mo>'
+            '<mn>0</mn>'
+            '</mtd>'
+            '</mtr>'
+            '</mtable>'
             '</mrow>'
         )
 
@@ -535,21 +563,24 @@ class ParseTestCase(unittest.TestCase):
         self.assertRendersTo(
             '||x||^2',
             '<msup>'
-                '<mrow>'
-                    '<mo>&#x2016;</mo>'
-                    '<mi>x</mi>'
-                    '<mo>&#x2016;</mo>'
-                '</mrow>'
-                '<mn>2</mn>'
+            '<mrow>'
+            '<mo>&#x2016;</mo>'
+            '<mi>x</mi>'
+            '<mo>&#x2016;</mo>'
+            '</mrow>'
+            '<mn>2</mn>'
             '</msup>'
         )
 
     def testRewriteLRAdditive(self):
         self.assertTreeEquals(
             parse('floor A'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mrow',
                         element_factory('mo', u"\u230A"),
                         element_factory('mi', 'A'),
                         element_factory('mo', u"\u230B")
@@ -561,11 +592,15 @@ class ParseTestCase(unittest.TestCase):
     def tesRewriteLRNested(self):
         self.assertTreeEquals(
             parse('floor abs A'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mrow',
                         element_factory('mo', u"\u230A"),
-                        element_factory('mrow',
+                        element_factory(
+                            'mrow',
                             element_factory('mo', '|'),
                             element_factory('mi', 'A'),
                             element_factory('mo', '|')
@@ -579,11 +614,15 @@ class ParseTestCase(unittest.TestCase):
     def testRewriteLRReplace(self):
         self.assertTreeEquals(
             parse('abs(xyz)'),
-            element_factory('math',
-                element_factory('mstyle',
-                    element_factory('mrow',
+            element_factory(
+                'math',
+                element_factory(
+                    'mstyle',
+                    element_factory(
+                        'mrow',
                         element_factory('mo', u"|"),
-                        element_factory('mrow',
+                        element_factory(
+                            'mrow',
                             element_factory('mi', 'x'),
                             element_factory('mi', 'y'),
                             element_factory('mi', 'z'),
@@ -594,6 +633,6 @@ class ParseTestCase(unittest.TestCase):
             )
         )
 
+
 if __name__ == '__main__':
     unittest.main()
-

@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re, markdown
+import markdown
 
 import asciimathml
+
 
 class ASCIIMathMLExtension(markdown.Extension):
     def __init__(self, configs):
@@ -31,17 +32,18 @@ class ASCIIMathMLExtension(markdown.Extension):
     def reset(self):
         pass
 
-class ASCIIMathMLPattern(markdown.inlinepatterns.Pattern):
 
+class ASCIIMathMLPattern(markdown.inlinepatterns.Pattern):
     def handleMatch(self, m):
         if markdown.version_info < (2, 1, 0):
             math = asciimathml.parse(m.group(2).strip(), markdown.etree.Element,
-                       markdown.AtomicString)
+                                     markdown.AtomicString)
         else:
             math = asciimathml.parse(m.group(2).strip(),
-                       markdown.util.etree.Element, markdown.util.AtomicString)
+                                     markdown.util.etree.Element, markdown.util.AtomicString)
         math.set('xmlns', 'http://www.w3.org/1998/Math/MathML')
         return math
+
 
 def makeExtension(configs=None):
     return ASCIIMathMLExtension(configs=configs)

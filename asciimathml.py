@@ -20,26 +20,24 @@ import sys
 
 __all__ = ['parse']
 
-Element_ = Element
-AtomicString_ = lambda s: s
-
 DELIMITERS = {'{': '}', '(': ')', '[': ']'}
 NUMBER_RE = re.compile(r'-?(\d+\.(\d+)?|\.?\d+)')
 QUOTED_STRING_RE = re.compile(r'"([^"]*)"')
 
 
-def text_check(text):
-    py2str = (sys.version_info.major == 2 and isinstance(text, basestring))
-    py3str = (sys.version_info.major >= 3 and isinstance(text, str))
+def default_AtomicString(s):
+    return s
 
-    return (py3str or py2str)
+
+Element_ = Element
+AtomicString_ = default_AtomicString
 
 
 def element_factory(tag, text=None, *children, **attrib):
     element = Element_(tag, **attrib)
 
-    if not text is None:
-        if text_check(text):
+    if text is not None:
+        if isinstance(text, str):
             element.text = AtomicString_(text)
         else:
             children = (text, ) + children
@@ -156,7 +154,7 @@ def sup(base, superscript):
     return n
 
 
-def parse(s, element=Element, atomicstring=lambda s: s):
+def parse(s, element=Element, atomicstring=default_AtomicString):
     """
     Translates from ASCIIMathML (an easy to type and highly readable way to
     represent math formulas) into MathML (a w3c standard directly displayable by
@@ -237,7 +235,7 @@ def trace_parser(p):
         else:
             try:
                 return tostring(remove_private(copy(n)))
-            except Exception as e:
+            except Exception:
                 return n
 
     def print_trace(*args):
@@ -267,7 +265,7 @@ def trace_parser(p):
 def parse_expr(s, siblings, required=False):
     s, n = parse_m(s, required=required)
 
-    if not n is None:
+    if n is not None:
         # Being both an _opening and a _closing element is a trait of
         # symmetrical delimiters (e.g. ||).
         # In that case, act as an opening delimiter only if there is not
@@ -367,7 +365,7 @@ def parse_exprs(s, nodes=None, inside_parens=False):
     while True:
         s, n = parse_expr(s, nodes)
 
-        if not n is None:
+        if n is not None:
             truly_closing = (
                 n.get('_closing', False)
                 and (
@@ -501,7 +499,7 @@ def parse_m(s, required=False):
 
 
 symbols = {
-    "alpha": element_factory("mi", u"\u03B1"),,
+    "alpha": element_factory("mi", u"\u03B1"),
     "beta": element_factory("mi", u"\u03B2"),
     "chi": element_factory("mi", u"\u03C7"),
     "delta": element_factory("mi", u"\u03B4"),
@@ -615,7 +613,7 @@ symbols = {
     "{": element_factory("mo", "{", _opening=True),
     "}": element_factory("mo", "}", _closing=True),
     "|": element_factory("mo", u"|", _opening=True, _closing=True),
-# double vertical line
+    # double vertical line
     "||": element_factory("mo", u"\u2016", _opening=True, _closing=True),
     "(:": element_factory("mo", u"\u2329", _opening=True),
     ":)": element_factory("mo", u"\u232A", _closing=True),
@@ -625,10 +623,10 @@ symbols = {
     ":}": element_factory("mo", u":}", _closing=True, _invisible=True),
 
     "int": element_factory("mo", u"\u222B"),
-#     "dx": element_factory("mi", u"{:d x:}", _definition=True),
-#     "dy": element_factory("mi", u"{:d y:}", _definition=True),
-#     "dz": element_factory("mi", u"{:d z:}", _definition=True),
-#     "dt": element_factory("mi", u"{:d t:}", _definition=True),
+    # "dx": element_factory("mi", u"{:d x:}", _definition=True),
+    # "dy": element_factory("mi", u"{:d y:}", _definition=True),
+    # "dz": element_factory("mi", u"{:d z:}", _definition=True),
+    # "dt": element_factory("mi", u"{:d t:}", _definition=True),
     "oint": element_factory("mo", u"\u222E"),
     "del": element_factory("mo", u"\u2202"),
     "grad": element_factory("mo", u"\u2207"),
@@ -641,7 +639,7 @@ symbols = {
     "/_": element_factory("mo", u"\u2220"),
     "/_\\": element_factory("mo", u"\u25B3"),
     "'": element_factory("mo", u"\u2032"),
-# arity of 1
+    # arity of 1
     "tilde": element_factory("mover", element_factory("mo", u"~"), _arity=1, _swap=True),
     "\\ ": element_factory("mo", u"\u00A0"),
     "frown": element_factory("mo", u"\u2322"),
@@ -661,12 +659,11 @@ symbols = {
     "QQ": element_factory("mo", u"\u211A"),
     "RR": element_factory("mo", u"\u211D"),
     "ZZ": element_factory("mo", u"\u2124"),
-    "f": element_factory("mi", u"f", _func=True) # sample
+    "f": element_factory("mi", u"f", _func=True),
     "g": element_factory("mi", u"g", _func=True),
 
     "lim": element_factory("mo", u"lim", _underover=True),
     "Lim": element_factory("mo", u"Lim", _underover=True),
-    "sin": element_factory("mrow", element_factory("mo", "sin"), _arity=1),
     "sin": element_factory("mrow", element_factory("mo", "sin"), _arity=1),
     "cos": element_factory("mrow", element_factory("mo", "cos"), _arity=1),
     "tan": element_factory("mrow", element_factory("mo", "tan"), _arity=1),
@@ -685,10 +682,14 @@ symbols = {
     "csch": element_factory("mrow", element_factory("mo", "csch"), _arity=1),
     "exp": element_factory("mrow", element_factory("mo", "exp"), _arity=1),
 
-    "abs": element_factory("mrow", element_factory("mo", "abs", _invisible=True), _arity=1, _rewrite_lr=[u"|", u"|"]),
-    "norm": element_factory("mrow", element_factory("mo", "norm", _invisible=True), _arity=1, _rewrite_lr=[u"\u2225", u"\u2225"]),
-    "floor": element_factory("mrow", element_factory("mo", "floor", _invisible=True), _arity=1, _rewrite_lr=[u"\u230A", u"\u230B"]),
-    "ceil": element_factory("mrow", element_factory("mo", "ceil", _invisible=True), _arity=1, _rewrite_lr=[u"\u2308", u"\u2309"]),
+    "abs": element_factory("mrow", element_factory("mo", "abs", _invisible=True),
+                           _arity=1, _rewrite_lr=[u"|", u"|"]),
+    "norm": element_factory("mrow", element_factory("mo", "norm", _invisible=True),
+                            _arity=1, _rewrite_lr=[u"\u2225", u"\u2225"]),
+    "floor": element_factory("mrow", element_factory("mo", "floor", _invisible=True),
+                             _arity=1, _rewrite_lr=[u"\u230A", u"\u230B"]),
+    "ceil": element_factory("mrow", element_factory("mo", "ceil", _invisible=True),
+                            _arity=1, _rewrite_lr=[u"\u2308", u"\u2309"]),
 
     "ln": element_factory("mrow", element_factory("mo", "ln"), _arity=1),
     "det": element_factory("mrow", element_factory("mo", "det"), _arity=1),
@@ -725,8 +726,8 @@ symbols = {
     "root": element_factory("mroot", _arity=2, _swap=True),
     "frac": element_factory("mfrac", _arity=2),
 
-# the base is the first argument
-# the second argument is where effect applies
+    # the base is the first argument
+    # the second argument is where effect applies
     "stackrel": element_factory("mover", _arity=2, _swap=True),
     "overset": element_factory("mover", _arity=2, _swap=True),
     "underset": element_factory("munder", _arity=2, _swap=True),
@@ -734,37 +735,34 @@ symbols = {
     "text": element_factory("mtext", _arity=1),
     "mbox": element_factory("mtext", _arity=1),
 
-# sets mathcolor attrib
-
+    # sets mathcolor attrib
     "color": element_factory("mstyle", _arity=2, _o1_attr="mathcolor"),
     "cancel": element_factory("menclose", _arity=1, notation="updiagonalstrike"),
 
-# new style tags
-## bold
+    # new style tags
+    # bold
     "bb": element_factory("mstyle", _arity=1, fontweight="bold"),
     "mathbf": element_factory("mstyle", _arity=1, fontweight="bold"),
 
-## sans
+    # sans
     "sf": element_factory("mstyle", _arity=1, fontfamily="sans"),
     "mathsf": element_factory("mstyle", _arity=1, fontfamily="sans"),
 
-## double-struck
+    # double-struck
     "bbb": element_factory("mstyle", _arity=1, mathvariant="double-struck"),
     "mathbb": element_factory("mstyle", _arity=1, mathvariant="double-struck"),
 
-## script
+    # script
     "cc": element_factory("mstyle", _arity=1, mathvariant="script"),
     "mathcal": element_factory("mstyle", _arity=1, mathvariant="script"),
 
-## monospace
+    # monospace
     "tt": element_factory("mstyle", _arity=1, fontfamily="monospace"),
     "mathtt": element_factory("mstyle", _arity=1, fontfamily="monospace"),
 
-## fraktur
+    # fraktur
     "fr": element_factory("mstyle", _arity=1, mathvariant="fraktur"),
     "mathfrak": element_factory("mstyle", _arity=1, mathvariant="fraktur"),
-# {input:"mbox", tag:"mtext", output:"mbox", tex:null, ttype:TEXT},
-# {input:"\"",   tag:"mtext", output:"mbox", tex:null, ttype:TEXT};
 }
 
 symbol_names = sorted(symbols.keys(), key=lambda s: len(s), reverse=True)
@@ -802,7 +800,7 @@ def main(args=None):
         import markdown
         try:
             element = markdown.etree.Element
-        except AttributeError as e:
+        except AttributeError:
             element = markdown.util.etree.Element
     elif args_ns.celement:
         from xml.etree.cElementTree import Element
