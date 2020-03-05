@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from distutils.core import setup
+from setuptools import setup
+
 setup(
     name = "asciimathml",
     py_modules = ["asciimathml", "mdx_asciimathml"],
@@ -35,6 +36,8 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Text Processing :: Markup :: XML"
         ],
+    test_suite = "test",
+    tests_require=["markdown"],
     long_description = """\
 Translates from ASCIIMathML (an easy to type and highly readable way to
 represent math formulas) into Presentation MathML (a w3c standard directly

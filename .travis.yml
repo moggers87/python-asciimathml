@@ -5,8 +5,4 @@ python:
   - "3.5"
   - "3.6"
 
-install:
-  - pip install markdown
-  - python setup.py -q install
-
-script: python -m unittest discover test -p "*test.py"
+script: python setup.py test
